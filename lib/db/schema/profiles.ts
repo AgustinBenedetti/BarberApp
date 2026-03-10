@@ -7,7 +7,6 @@ export const profiles = pgTable("profiles", {
   // Mismo UUID que auth.users de Supabase — se mantiene en sync via trigger
   id: uuid("id").primaryKey(),
   tenantId: uuid("tenant_id")
-    .notNull()
     .references(() => tenants.id, { onDelete: "cascade" }),
   email: text("email").notNull(),
   phone: text("phone"),

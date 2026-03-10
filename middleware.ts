@@ -1,8 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = ["/login", "/register"];
+// Matches /{slug} and /{slug}/book — public tenant routes
 const SLUG_PATTERN = /^\/[a-z0-9-]+(?:\/book(?:\/.*)?)?$/;
+
+const AUTH_ROUTES = ["/login", "/register"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -38,22 +40,40 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Rutas públicas de la landing por tenant: /{slug} y /{slug}/book
-  if (SLUG_PATTERN.test(pathname)) {
-    return response;
-  }
+  // Root: public marketing page
+  if (pathname === "/") return response;
 
-  // Rutas de auth: redirigir al dashboard si ya está autenticado
-  if (PUBLIC_ROUTES.includes(pathname)) {
+  const isAuthRoute = AUTH_ROUTES.includes(pathname);
+  const isOnboarding = pathname.startsWith("/onboarding");
+  const isDashboard = pathname.startsWith("/dashboard");
+
+  // Tenant public routes: /{slug} and /{slug}/book
+  // Must be checked AFTER known system routes to avoid conflicts (e.g. /dashboard)
+  const isTenantRoute =
+    !isAuthRoute && !isOnboarding && !isDashboard && SLUG_PATTERN.test(pathname);
+
+  if (isTenantRoute) return response;
+
+  const tenantId = user?.app_metadata?.tenant_id as string | undefined;
+
+  // Auth routes (/login, /register): redirect away if already authenticated
+  if (isAuthRoute) {
     if (user) {
-      return NextResponse.redirect(new URL("/", request.url));
+      const dest = tenantId ? "/dashboard" : "/onboarding/step-1";
+      return NextResponse.redirect(new URL(dest, request.url));
     }
     return response;
   }
 
-  // Rutas del dashboard: requieren autenticación
+  // All remaining routes require authentication
   if (!user) {
     return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Authenticated but onboarding not started → send to step 1
+  // (except when they're already navigating through the onboarding wizard)
+  if (!tenantId && !isOnboarding) {
+    return NextResponse.redirect(new URL("/onboarding/step-1", request.url));
   }
 
   return response;
