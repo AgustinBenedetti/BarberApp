@@ -1,0 +1,3 @@
+- dotenv instalado para leer .env.local en drizzle-kit
+- Session Pooler de Supabase (no Direct connection) por IPv4
+- Puerto según URL que provee Supabase (verificar en dashboard)
