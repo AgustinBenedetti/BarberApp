@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Matches /{slug} and /{slug}/book — public tenant routes
-const SLUG_PATTERN = /^\/[a-z0-9-]+(?:\/book(?:\/.*)?)?$/;
+// Matches /{slug} and /{slug}/reservar — public tenant routes
+const SLUG_PATTERN = /^\/[a-z0-9-]+(?:\/reservar(?:\/.*)?)?$/;
 
 const AUTH_ROUTES = ["/login", "/register"];
 
@@ -47,7 +47,7 @@ export async function middleware(request: NextRequest) {
   const isOnboarding = pathname.startsWith("/onboarding");
   const isDashboard = pathname.startsWith("/dashboard");
 
-  // Tenant public routes: /{slug} and /{slug}/book
+  // Tenant public routes: /{slug} and /{slug}/reservar
   // Must be checked AFTER known system routes to avoid conflicts (e.g. /dashboard)
   const isTenantRoute =
     !isAuthRoute && !isOnboarding && !isDashboard && SLUG_PATTERN.test(pathname);
