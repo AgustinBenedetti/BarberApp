@@ -114,7 +114,10 @@ export async function saveStep1(
   });
 
   // Refresh session so the new JWT (with tenant_id) is set in cookies
-  await supabase.auth.refreshSession();
+  const { error: refreshError } = await supabase.auth.refreshSession();
+  if (refreshError) {
+    return { error: { _form: ["Error al actualizar la sesión. Intentá de nuevo."] } };
+  }
 
   redirect("/onboarding/step-2");
 }

@@ -12,9 +12,9 @@ const INPUT_CLS =
 const SKIP_LINK_CLS =
   "flex-1 inline-flex items-center justify-center rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors";
 
-type BarberRow = { displayName: string; email: string };
+type BarberRow = { displayName: string };
 
-const EMPTY: BarberRow = { displayName: "", email: "" };
+const EMPTY: BarberRow = { displayName: "" };
 
 export function Step3Form() {
   const [state, action, isPending] = useActionState(saveStep3, null);
@@ -78,31 +78,14 @@ export function Step3Form() {
               </button>
             )}
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Nombre</label>
-                <input
-                  value={row.displayName}
-                  onChange={(e) => update(i, "displayName", e.target.value)}
-                  placeholder="Juan García"
-                  className={INPUT_CLS}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">
-                  Email{" "}
-                  <span className="font-normal text-muted-foreground">
-                    (opcional)
-                  </span>
-                </label>
-                <input
-                  type="email"
-                  value={row.email}
-                  onChange={(e) => update(i, "email", e.target.value)}
-                  placeholder="juan@email.com"
-                  className={INPUT_CLS}
-                />
-              </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Nombre</label>
+              <input
+                value={row.displayName}
+                onChange={(e) => update(i, "displayName", e.target.value)}
+                placeholder="Juan García"
+                className={INPUT_CLS}
+              />
             </div>
           </div>
         ))}

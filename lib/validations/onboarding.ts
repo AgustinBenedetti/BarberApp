@@ -72,7 +72,6 @@ export const step2Schema = z.object({
 
 export const barberSchema = z.object({
   displayName: z.string().min(1, "Requerido"),
-  email: z.string().email("Email inválido").optional().or(z.literal("")),
 });
 
 export const step3Schema = z.object({
