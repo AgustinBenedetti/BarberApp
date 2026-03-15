@@ -15,8 +15,7 @@ export const barbers = pgTable("barbers", {
     .notNull()
     .references(() => tenants.id, { onDelete: "cascade" }),
   profileId: uuid("profile_id")
-    .notNull()
-    .references(() => profiles.id, { onDelete: "cascade" }),
+    .references(() => profiles.id, { onDelete: "set null" }),
   displayName: text("display_name").notNull(),
   bio: text("bio"),
   // Ejemplo: { monday: [{ start: "09:00", end: "13:00" }, { start: "15:00", end: "19:00" }] }
