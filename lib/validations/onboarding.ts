@@ -1,16 +1,38 @@
 import { z } from "zod";
 
-const daySchedule = z.object({
-  closed: z.boolean(),
-  open: z
-    .string()
-    .regex(/^\d{2}:\d{2}$/)
-    .optional(),
-  close: z
-    .string()
-    .regex(/^\d{2}:\d{2}$/)
-    .optional(),
-});
+const RESERVED_SLUGS = [
+  "api",
+  "login",
+  "register",
+  "dashboard",
+  "onboarding",
+  "reservar",
+  "not-found",
+  "404",
+  "admin",
+  "static",
+  "_next",
+];
+
+const daySchedule = z
+  .object({
+    closed: z.boolean(),
+    open: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/)
+      .optional(),
+    close: z
+      .string()
+      .regex(/^\d{2}:\d{2}$/)
+      .optional(),
+  })
+  .refine(
+    (day) => {
+      if (day.closed || !day.open || !day.close) return true;
+      return day.open < day.close;
+    },
+    { message: "El horario de apertura debe ser anterior al de cierre" }
+  );
 
 export const DAYS = [
   "monday",
@@ -43,7 +65,8 @@ export const step1Schema = z.object({
     .string()
     .min(2, "Mínimo 2 caracteres")
     .max(50, "Máximo 50 caracteres")
-    .regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones"),
+    .regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones")
+    .refine((val) => !RESERVED_SLUGS.includes(val), "Este nombre no está disponible"),
   address: z.string().max(200).optional(),
   openingHours: z.object({
     monday: daySchedule,
