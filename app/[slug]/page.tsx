@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Clock } from "lucide-react";
 import type { Metadata } from "next";
+import { z } from "zod";
 
 import { db } from "@/lib/db";
 import { tenants, barbers, services, profiles } from "@/lib/db/schema";
@@ -13,8 +14,10 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-type DaySchedule = { open: string; close: string };
-type OpeningHours = Partial<Record<string, DaySchedule>>;
+const dayScheduleSchema = z.object({ open: z.string(), close: z.string() });
+const openingHoursSchema = z.record(z.string(), dayScheduleSchema);
+type DaySchedule = z.infer<typeof dayScheduleSchema>;
+type OpeningHours = z.infer<typeof openingHoursSchema>;
 
 const DAYS = [
   { key: "monday", label: "Lunes" },
@@ -42,12 +45,8 @@ function formatDuration(minutes: number) {
 }
 
 function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+  const words = name.trim().split(/\s+/);
+  return ((words[0]?.[0] ?? "") + (words[1]?.[0] ?? "")).toUpperCase();
 }
 
 
@@ -95,7 +94,8 @@ export default async function TenantLandingPage({ params }: PageProps) {
       ),
   ]);
 
-  const hours = tenant.openingHours as OpeningHours | null;
+  const parsedHours = openingHoursSchema.safeParse(tenant.openingHours);
+  const hours: OpeningHours | null = parsedHours.success ? parsedHours.data : null;
   const reserveUrl = `/${slug}/reservar`;
 
   const navLinks = [
