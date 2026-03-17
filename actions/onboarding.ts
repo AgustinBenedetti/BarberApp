@@ -159,16 +159,19 @@ export async function saveStep2(
     (s) => s.name.trim().length > 0,
   );
 
-  if (validServices.length > 0) {
-    await db.insert(services).values(
-      validServices.map((s) => ({
-        tenantId,
-        name: s.name.trim(),
-        durationMinutes: s.durationMinutes,
-        price: String(s.price),
-      })),
-    );
-  }
+  await db.transaction(async (tx) => {
+    await tx.delete(services).where(eq(services.tenantId, tenantId));
+    if (validServices.length > 0) {
+      await tx.insert(services).values(
+        validServices.map((s) => ({
+          tenantId,
+          name: s.name.trim(),
+          durationMinutes: s.durationMinutes,
+          price: String(s.price),
+        })),
+      );
+    }
+  });
 
   redirect("/onboarding/step-3");
 }
@@ -233,9 +236,12 @@ export async function saveStep3(
     });
   }
 
-  if (toInsert.length > 0) {
-    await db.insert(barbers).values(toInsert);
-  }
+  await db.transaction(async (tx) => {
+    await tx.delete(barbers).where(eq(barbers.tenantId, tenantId));
+    if (toInsert.length > 0) {
+      await tx.insert(barbers).values(toInsert);
+    }
+  });
 
   redirect("/dashboard");
 }
