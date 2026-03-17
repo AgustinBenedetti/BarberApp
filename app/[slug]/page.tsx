@@ -1,3 +1,5 @@
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 import { eq, and } from "drizzle-orm";
 import Image from "next/image";
@@ -13,6 +15,40 @@ import FaqAccordion from "@/components/landing/faq-accordion";
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
+
+const fetchTenantPageData = unstable_cache(
+  async (slug: string) => {
+    const tenant = await db.query.tenants.findFirst({
+      where: eq(tenants.slug, slug),
+    });
+    if (!tenant) return null;
+
+    const [barberList, serviceList] = await Promise.all([
+      db
+        .select({
+          id: barbers.id,
+          displayName: barbers.displayName,
+          bio: barbers.bio,
+          avatarUrl: profiles.avatarUrl,
+        })
+        .from(barbers)
+        .leftJoin(profiles, eq(barbers.profileId, profiles.id))
+        .where(and(eq(barbers.tenantId, tenant.id), eq(barbers.isActive, true))),
+      db
+        .select()
+        .from(services)
+        .where(
+          and(eq(services.tenantId, tenant.id), eq(services.isActive, true))
+        ),
+    ]);
+
+    return { tenant, barberList, serviceList };
+  },
+  ["tenant-landing"],
+  { revalidate: 60 }
+);
+
+const getTenantPageData = cache(fetchTenantPageData);
 
 const dayScheduleSchema = z.object({ open: z.string(), close: z.string() });
 const openingHoursSchema = z.record(z.string(), dayScheduleSchema);
@@ -54,10 +90,9 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const tenant = await db.query.tenants.findFirst({
-    where: eq(tenants.slug, slug),
-  });
-  if (!tenant) return {};
+  const data = await getTenantPageData(slug);
+  if (!data) return {};
+  const { tenant } = data;
   return {
     title: `${tenant.name} | BarberSaaS`,
     description: tenant.address
@@ -69,30 +104,10 @@ export async function generateMetadata({
 export default async function TenantLandingPage({ params }: PageProps) {
   const { slug } = await params;
 
-  const tenant = await db.query.tenants.findFirst({
-    where: eq(tenants.slug, slug),
-  });
+  const data = await getTenantPageData(slug);
+  if (!data) notFound();
 
-  if (!tenant) notFound();
-
-  const [barberList, serviceList] = await Promise.all([
-    db
-      .select({
-        id: barbers.id,
-        displayName: barbers.displayName,
-        bio: barbers.bio,
-        avatarUrl: profiles.avatarUrl,
-      })
-      .from(barbers)
-      .leftJoin(profiles, eq(barbers.profileId, profiles.id))
-      .where(and(eq(barbers.tenantId, tenant.id), eq(barbers.isActive, true))),
-    db
-      .select()
-      .from(services)
-      .where(
-        and(eq(services.tenantId, tenant.id), eq(services.isActive, true))
-      ),
-  ]);
+  const { tenant, barberList, serviceList } = data;
 
   const parsedHours = openingHoursSchema.safeParse(tenant.openingHours);
   const hours: OpeningHours | null = parsedHours.success ? parsedHours.data : null;
