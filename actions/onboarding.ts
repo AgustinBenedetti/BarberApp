@@ -77,6 +77,12 @@ export async function saveStep1(
   let logoUrl: string | undefined;
   const logoFile = formData.get("logo") as File | null;
   if (logoFile && logoFile.size > 0) {
+    if (logoFile.size > 5 * 1024 * 1024) {
+      return { error: { logo: ["El logo no puede superar los 5MB"] } };
+    }
+    if (!logoFile.type.startsWith("image/")) {
+      return { error: { logo: ["El archivo debe ser una imagen"] } };
+    }
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("logos")
       .upload(`${slug}/${Date.now()}`, logoFile, { upsert: true });
