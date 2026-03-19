@@ -5,7 +5,10 @@
       "Bash(npm:*)",
       "Bash(pnpm create:*)",
       "mcp__stitch__list_screens",
-      "mcp__stitch__get_screen"
+      "mcp__stitch__get_screen",
+      "Bash(ls:*)",
+      "Bash(grep -r base-ui C:/Users/Agustin/Documents/Proyectos/Barber/components --include=*.tsx -l)",
+      "Bash(grep -r @base-ui C:/Users/Agustin/Documents/Proyectos/Barber --include=*.tsx -l)"
     ]
   }
 }

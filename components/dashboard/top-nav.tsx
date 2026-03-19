@@ -1,5 +1,9 @@
-import { Scissors, LogOut, ExternalLink } from "lucide-react";
+"use client";
+
+import { usePathname } from "next/navigation";
+import { Scissors, LogOut, ExternalLink, LayoutDashboard, CalendarClock } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth";
 
 interface DashboardTopNavProps {
@@ -8,15 +12,22 @@ interface DashboardTopNavProps {
   tenantName?: string;
 }
 
+const NAV_ITEMS = [
+  { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
+  { href: "/dashboard/turnos", label: "Turnos", icon: CalendarClock },
+];
+
 export function DashboardTopNav({
   userEmail,
   tenantSlug,
   tenantName,
 }: DashboardTopNavProps) {
+  const pathname = usePathname();
+
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
+      {/* Main row */}
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-
         {/* Brand + tenant */}
         <Link
           href="/dashboard"
@@ -71,6 +82,31 @@ export function DashboardTopNav({
             </button>
           </form>
         </div>
+      </div>
+
+      {/* Nav tabs row */}
+      <div className="mx-auto flex max-w-5xl items-end gap-0 px-4">
+        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          const isActive =
+            href === "/dashboard"
+              ? pathname === "/dashboard"
+              : pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors",
+                isActive
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </Link>
+          );
+        })}
       </div>
     </header>
   );
