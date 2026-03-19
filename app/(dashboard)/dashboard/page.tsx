@@ -153,7 +153,7 @@ export default async function DashboardPage() {
             <h2 className="text-xl font-bold tracking-tight">Próximos Turnos</h2>
           </div>
           <Link
-            href="#"
+            href="/dashboard/turnos"
             className="text-xs font-semibold uppercase tracking-[0.1em] text-primary hover:underline"
           >
             Ver todos
