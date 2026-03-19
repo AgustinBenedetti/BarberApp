@@ -4,13 +4,13 @@ import { useState, useTransition, useActionState } from "react";
 import Image from "next/image";
 import {
   Check,
-  ChevronRight,
   ChevronLeft,
   Clock,
   User,
   Loader2,
   Coffee,
   Music,
+  Plus,
 } from "lucide-react";
 import {
   createAppointment,
@@ -59,20 +59,12 @@ const WEEK_DAYS = [
 ];
 const DAY_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const MONTH_SHORT = [
-  "ene",
-  "feb",
-  "mar",
-  "abr",
-  "may",
-  "jun",
-  "jul",
-  "ago",
-  "sep",
-  "oct",
-  "nov",
-  "dic",
+  "ene", "feb", "mar", "abr", "may", "jun",
+  "jul", "ago", "sep", "oct", "nov", "dic",
 ];
 const NO_PREFERENCE_ID = "no-preference";
+
+const STEP_LABELS = ["Servicio", "Barbero", "Fecha", "Info"];
 
 function formatPrice(price: string): string {
   return new Intl.NumberFormat("es-AR", {
@@ -130,7 +122,8 @@ function formatDisplayDate(dateStr: string): string {
   });
 }
 
-const STEP_LABELS = ["Servicio", "Barbero", "Horario", "Datos"];
+const INPUT_CLS =
+  "w-full rounded-xl border border-input bg-secondary/40 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/60 transition-colors";
 
 export default function BookingWizard({
   tenantId,
@@ -141,9 +134,7 @@ export default function BookingWizard({
   openingHours,
 }: BookingWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [selectedService, setSelectedService] = useState<ServiceItem | null>(
-    null,
-  );
+  const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
   const [selectedBarberId, setSelectedBarberId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -170,14 +161,8 @@ export default function BookingWizard({
     setSelectedTime(null);
     setSlots([]);
     startSlotTransition(async () => {
-      const effectiveBarberId =
-        barberId === NO_PREFERENCE_ID ? null : barberId;
-      const available = await getAvailableSlots(
-        tenantId,
-        effectiveBarberId,
-        date,
-        duration,
-      );
+      const effectiveBarberId = barberId === NO_PREFERENCE_ID ? null : barberId;
+      const available = await getAvailableSlots(tenantId, effectiveBarberId, date, duration);
       setSlots(available);
     });
   }
@@ -196,10 +181,8 @@ export default function BookingWizard({
         if (found) {
           setExistingClient(found);
           if (!name) setName(found.name);
-          if (!drink && found.preferences?.drink)
-            setDrink(found.preferences.drink);
-          if (!music && found.preferences?.music)
-            setMusic(found.preferences.music);
+          if (!drink && found.preferences?.drink) setDrink(found.preferences.drink);
+          if (!music && found.preferences?.music) setMusic(found.preferences.music);
         }
       });
     }
@@ -210,66 +193,82 @@ export default function BookingWizard({
       ? "Sin preferencia"
       : (barbers.find((b) => b.id === selectedBarberId)?.displayName ?? "");
 
-  // Step 1 — service selection
+  // Step 1 — service selection (patrón Stitch: lista con precio a la derecha)
   function renderStep1() {
     return (
       <div>
-        <h2 className="text-xl font-bold text-zinc-100 mb-1">
-          Elegí tu servicio
-        </h2>
-        <p className="text-zinc-500 text-sm mb-6">
-          Seleccioná el servicio que querés
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          Paso 1
         </p>
+        <h2 className="mb-1 text-2xl font-bold tracking-tight">
+          Seleccioná tu{" "}
+          <span className="text-primary italic">experiencia</span>
+        </h2>
+        <p className="mb-6 text-sm text-muted-foreground">
+          Elegí el servicio que querés reservar
+        </p>
+
         {services.length === 0 ? (
-          <p className="text-zinc-400 text-center py-10">
+          <p className="py-10 text-center text-muted-foreground">
             No hay servicios disponibles
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {services.map((service) => (
-              <button
-                key={service.id}
-                onClick={() => {
-                  setSelectedService(service);
-                  setSelectedDate(null);
-                  setSelectedTime(null);
-                  setSlots([]);
-                }}
-                className={`text-left p-4 rounded-xl border transition-all ${
-                  selectedService?.id === service.id
-                    ? "border-amber-500 bg-amber-500/10"
-                    : "border-zinc-700 bg-zinc-900 hover:border-zinc-600"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <span className="font-semibold text-zinc-100">
-                    {service.name}
-                  </span>
-                  {selectedService?.id === service.id && (
-                    <Check className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                  )}
+          <div className="overflow-hidden rounded-2xl border border-border bg-card">
+            {services.map((service, index) => {
+              const isSelected = selectedService?.id === service.id;
+              return (
+                <div key={service.id}>
+                  {index > 0 && <div className="mx-4 h-px bg-border/50" />}
+                  <button
+                    onClick={() => {
+                      setSelectedService(service);
+                      setSelectedDate(null);
+                      setSelectedTime(null);
+                      setSlots([]);
+                    }}
+                    className={`flex w-full items-center justify-between px-5 py-4 text-left transition-colors ${
+                      isSelected ? "bg-primary/8" : "hover:bg-accent"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground">{service.name}</p>
+                      <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {formatDuration(service.durationMinutes)}
+                      </p>
+                    </div>
+                    <div className="ml-4 flex shrink-0 items-center gap-3">
+                      <span className="text-base font-bold text-primary">
+                        {formatPrice(service.price)}
+                      </span>
+                      <div
+                        className={`flex h-7 w-7 items-center justify-center rounded-full border-2 transition-all ${
+                          isSelected
+                            ? "border-primary bg-primary"
+                            : "border-border"
+                        }`}
+                      >
+                        {isSelected ? (
+                          <Check className="h-3.5 w-3.5 text-primary-foreground" />
+                        ) : (
+                          <Plus className="h-3.5 w-3.5 text-muted-foreground/50" />
+                        )}
+                      </div>
+                    </div>
+                  </button>
                 </div>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-zinc-500 text-sm flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    {formatDuration(service.durationMinutes)}
-                  </span>
-                  <span className="text-amber-400 font-bold">
-                    {formatPrice(service.price)}
-                  </span>
-                </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
         )}
-        <div className="mt-6 flex justify-end">
+
+        <div className="mt-6">
           <button
             disabled={!selectedService}
             onClick={() => setStep(2)}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 font-bold py-3 px-6 rounded-xl transition-colors"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30"
           >
-            Continuar
-            <ChevronRight className="w-4 h-4" />
+            Continuar →
           </button>
         </div>
       </div>
@@ -280,29 +279,32 @@ export default function BookingWizard({
   function renderStep2() {
     return (
       <div>
-        <h2 className="text-xl font-bold text-zinc-100 mb-1">
-          Elegí tu barbero
-        </h2>
-        <p className="text-zinc-500 text-sm mb-6">
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          Paso 2
+        </p>
+        <h2 className="mb-1 text-2xl font-bold tracking-tight">Tu barbero</h2>
+        <p className="mb-6 text-sm text-muted-foreground">
           O continuá sin preferencia
         </p>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {/* Sin preferencia */}
           <button
             onClick={() => setSelectedBarberId(NO_PREFERENCE_ID)}
-            className={`flex flex-col items-center text-center p-3 rounded-xl border transition-all ${
+            className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all ${
               selectedBarberId === NO_PREFERENCE_ID
-                ? "border-amber-500 bg-amber-500/10"
-                : "border-zinc-700 bg-zinc-900 hover:border-zinc-600"
+                ? "border-primary bg-primary/8"
+                : "border-border bg-card hover:border-primary/30 hover:bg-accent"
             }`}
           >
-            <div className="w-14 h-14 rounded-full bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center mb-2">
-              <User className="w-6 h-6 text-zinc-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary">
+              <User className="h-5 w-5 text-muted-foreground" />
             </div>
-            <span className="text-xs font-medium text-zinc-400 leading-tight">
+            <span className="text-[11px] font-medium leading-tight text-muted-foreground">
               Sin preferencia
             </span>
             {selectedBarberId === NO_PREFERENCE_ID && (
-              <Check className="w-4 h-4 text-amber-500 mt-1" />
+              <Check className="h-3.5 w-3.5 text-primary" />
             )}
           </button>
 
@@ -310,43 +312,37 @@ export default function BookingWizard({
             <button
               key={barber.id}
               onClick={() => setSelectedBarberId(barber.id)}
-              className={`flex flex-col items-center text-center p-3 rounded-xl border transition-all ${
+              className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all ${
                 selectedBarberId === barber.id
-                  ? "border-amber-500 bg-amber-500/10"
-                  : "border-zinc-700 bg-zinc-900 hover:border-zinc-600"
+                  ? "border-primary bg-primary/8"
+                  : "border-border bg-card hover:border-primary/30 hover:bg-accent"
               }`}
             >
               {barber.avatarUrl ? (
-                <div className="relative w-14 h-14 rounded-full overflow-hidden mb-2 ring-2 ring-zinc-700">
-                  <Image
-                    src={barber.avatarUrl}
-                    alt={barber.displayName}
-                    fill
-                    sizes="56px"
-                    className="object-cover"
-                  />
+                <div className="relative h-12 w-12 overflow-hidden rounded-full ring-2 ring-border">
+                  <Image src={barber.avatarUrl} alt={barber.displayName} fill sizes="48px" className="object-cover" />
                 </div>
               ) : (
-                <div className="w-14 h-14 rounded-full bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center mb-2 font-bold text-amber-400">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-sm font-bold text-primary">
                   {getInitials(barber.displayName)}
                 </div>
               )}
-              <span className="text-xs font-medium text-zinc-300 leading-tight line-clamp-2">
+              <span className="line-clamp-2 text-[11px] font-medium leading-tight text-foreground">
                 {barber.displayName}
               </span>
               {selectedBarberId === barber.id && (
-                <Check className="w-4 h-4 text-amber-500 mt-1" />
+                <Check className="h-3.5 w-3.5 text-primary" />
               )}
             </button>
           ))}
         </div>
 
-        <div className="mt-6 flex justify-between">
+        <div className="mt-6 flex gap-3">
           <button
             onClick={() => setStep(1)}
-            className="flex items-center gap-2 text-zinc-400 hover:text-zinc-200 py-3 px-4 rounded-xl transition-colors"
+            className="flex items-center gap-1.5 rounded-xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="h-4 w-4" />
             Atrás
           </button>
           <button
@@ -357,52 +353,54 @@ export default function BookingWizard({
               setSlots([]);
               setStep(3);
             }}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 font-bold py-3 px-6 rounded-xl transition-colors"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30"
           >
-            Continuar
-            <ChevronRight className="w-4 h-4" />
+            Continuar →
           </button>
         </div>
       </div>
     );
   }
 
-  // Step 3 — date + time selection
+  // Step 3 — date + time
   function renderStep3() {
     if (!selectedService) return null;
     return (
       <div>
-        <h2 className="text-xl font-bold text-zinc-100 mb-1">
-          Fecha y horario
-        </h2>
-        <p className="text-zinc-500 text-sm mb-6">
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          Paso 3
+        </p>
+        <h2 className="mb-1 text-2xl font-bold tracking-tight">Fecha y horario</h2>
+        <p className="mb-6 text-sm text-muted-foreground">
           Elegí cuándo querés tu turno
         </p>
 
         {/* Date strip */}
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
+        <div className="flex gap-2 overflow-x-auto pb-2" style={{ marginInline: "-1rem", paddingInline: "1rem" }}>
           {dates.map(({ dateStr, dayLabel, dayNum, monthLabel, isOpen }) => (
             <button
               key={dateStr}
               disabled={!isOpen}
               onClick={() => handleDateSelect(dateStr)}
-              className={`flex-shrink-0 flex flex-col items-center py-3 px-2 rounded-xl border w-[4.25rem] transition-all ${
+              className={`flex w-16 shrink-0 flex-col items-center rounded-xl border py-3 transition-all ${
                 !isOpen
-                  ? "border-zinc-800 bg-zinc-900/50 opacity-40 cursor-not-allowed"
+                  ? "cursor-not-allowed border-border opacity-30"
                   : selectedDate === dateStr
-                    ? "border-amber-500 bg-amber-500/10"
-                    : "border-zinc-700 bg-zinc-900 hover:border-zinc-600"
+                    ? "border-primary bg-primary/10"
+                    : "border-border bg-card hover:border-primary/40"
               }`}
             >
-              <span className="text-xs text-zinc-500 uppercase">{dayLabel}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {dayLabel}
+              </span>
               <span
-                className={`text-lg font-bold mt-0.5 ${
-                  selectedDate === dateStr ? "text-amber-400" : "text-zinc-100"
+                className={`mt-0.5 text-lg font-bold ${
+                  selectedDate === dateStr ? "text-primary" : "text-foreground"
                 }`}
               >
                 {dayNum}
               </span>
-              <span className="text-xs text-zinc-500">{monthLabel}</span>
+              <span className="text-[10px] text-muted-foreground">{monthLabel}</span>
             </button>
           ))}
         </div>
@@ -410,31 +408,31 @@ export default function BookingWizard({
         {/* Time slots */}
         {selectedDate && (
           <div className="mt-6">
-            <p className="text-sm font-medium text-zinc-400 mb-3">
-              Horarios disponibles —{" "}
-              <span className="capitalize">
+            <p className="mb-3 text-sm font-medium text-muted-foreground">
+              Disponibles —{" "}
+              <span className="capitalize text-foreground">
                 {formatDisplayDate(selectedDate)}
               </span>
             </p>
             {slotsLoading ? (
-              <div className="flex items-center gap-2 text-zinc-500 py-6">
-                <Loader2 className="w-4 h-4 animate-spin" />
+              <div className="flex items-center gap-2 py-6 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="text-sm">Cargando horarios...</span>
               </div>
             ) : slots.length === 0 ? (
-              <p className="text-zinc-500 text-sm py-6">
+              <p className="py-6 text-sm text-muted-foreground">
                 No hay horarios disponibles para este día
               </p>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {slots.map((slot) => (
                   <button
                     key={slot}
                     onClick={() => setSelectedTime(slot)}
-                    className={`py-2.5 px-3 rounded-lg text-sm font-medium border transition-all ${
+                    className={`rounded-xl border py-3 text-sm font-semibold transition-all ${
                       selectedTime === slot
-                        ? "border-amber-500 bg-amber-500/10 text-amber-400"
-                        : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-600"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-card text-foreground hover:border-primary/40"
                     }`}
                   >
                     {slot}
@@ -445,21 +443,20 @@ export default function BookingWizard({
           </div>
         )}
 
-        <div className="mt-6 flex justify-between">
+        <div className="mt-6 flex gap-3">
           <button
             onClick={() => setStep(2)}
-            className="flex items-center gap-2 text-zinc-400 hover:text-zinc-200 py-3 px-4 rounded-xl transition-colors"
+            className="flex items-center gap-1.5 rounded-xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="h-4 w-4" />
             Atrás
           </button>
           <button
             disabled={!selectedDate || !selectedTime}
             onClick={() => setStep(4)}
-            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 font-bold py-3 px-6 rounded-xl transition-colors"
+            className="flex flex-1 items-center justify-center rounded-xl bg-primary py-3 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30"
           >
-            Continuar
-            <ChevronRight className="w-4 h-4" />
+            Continuar →
           </button>
         </div>
       </div>
@@ -473,38 +470,46 @@ export default function BookingWizard({
 
     return (
       <div>
-        <h2 className="text-xl font-bold text-zinc-100 mb-1">Tus datos</h2>
-        <p className="text-zinc-500 text-sm mb-6">Para confirmar tu turno</p>
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          Paso 4
+        </p>
+        <h2 className="mb-1 text-2xl font-bold tracking-tight">Tus datos</h2>
+        <p className="mb-6 text-sm text-muted-foreground">Para confirmar tu turno</p>
 
         {/* Booking summary */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-6 space-y-2.5 text-sm">
-          <div className="flex justify-between gap-4">
-            <span className="text-zinc-500 flex-shrink-0">Servicio</span>
-            <span className="text-zinc-200 font-medium text-right">
-              {selectedService?.name}
-            </span>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-zinc-500 flex-shrink-0">Barbero</span>
-            <span className="text-zinc-200 font-medium text-right">
-              {selectedBarberName}
-            </span>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-zinc-500 flex-shrink-0">Fecha</span>
-            <span className="text-zinc-200 font-medium text-right capitalize">
-              {selectedDate ? formatDisplayDate(selectedDate) : ""}
-            </span>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-zinc-500 flex-shrink-0">Hora</span>
-            <span className="text-amber-400 font-bold">{selectedTime}</span>
-          </div>
+        <div className="mb-6 overflow-hidden rounded-2xl border border-border bg-card">
+          {[
+            { label: "Servicio", value: selectedService?.name },
+            { label: "Barbero", value: selectedBarberName },
+            {
+              label: "Fecha",
+              value: selectedDate ? formatDisplayDate(selectedDate) : "",
+              capitalize: true,
+            },
+            { label: "Hora", value: selectedTime, accent: true },
+          ].map(({ label, value, capitalize, accent }, i) => (
+            <div key={label}>
+              {i > 0 && <div className="mx-4 h-px bg-border/50" />}
+              <div className="flex items-center justify-between px-5 py-3">
+                <span className="text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  {label}
+                </span>
+                <span
+                  className={`text-sm font-medium ${capitalize ? "capitalize" : ""} ${
+                    accent ? "text-primary font-bold" : "text-foreground"
+                  }`}
+                >
+                  {value}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
 
+        {/* Client recognition */}
         {existingClient && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-6">
-            <p className="text-amber-300 text-sm font-medium">
+          <div className="mb-6 rounded-xl border border-primary/30 bg-primary/8 p-4">
+            <p className="text-sm font-medium text-primary">
               ¡Hola {existingClient.name}!{" "}
               {existingDrink
                 ? `¿Querés el mismo corte de siempre con tu ${existingDrink}?`
@@ -515,22 +520,14 @@ export default function BookingWizard({
 
         <form action={formAction} className="space-y-4">
           <input type="hidden" name="tenantId" value={tenantId} />
-          <input
-            type="hidden"
-            name="serviceId"
-            value={selectedService?.id ?? ""}
-          />
-          <input
-            type="hidden"
-            name="barberId"
-            value={selectedBarberId ?? NO_PREFERENCE_ID}
-          />
+          <input type="hidden" name="serviceId" value={selectedService?.id ?? ""} />
+          <input type="hidden" name="barberId" value={selectedBarberId ?? NO_PREFERENCE_ID} />
           <input type="hidden" name="date" value={selectedDate ?? ""} />
           <input type="hidden" name="startTime" value={selectedTime ?? ""} />
 
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-              Nombre <span className="text-amber-500">*</span>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              Nombre <span className="text-primary">*</span>
             </label>
             <input
               type="text"
@@ -539,16 +536,16 @@ export default function BookingWizard({
               onChange={(e) => setName(e.target.value)}
               required
               placeholder="Tu nombre"
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
+              className={INPUT_CLS}
             />
             {state?.error?.name && (
-              <p className="mt-1 text-xs text-red-400">{state.error.name[0]}</p>
+              <p className="text-xs text-destructive">{state.error.name[0]}</p>
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-              Teléfono <span className="text-amber-500">*</span>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              Teléfono <span className="text-primary">*</span>
             </label>
             <input
               type="tel"
@@ -558,27 +555,25 @@ export default function BookingWizard({
               onBlur={handlePhoneBlur}
               required
               placeholder="Tu teléfono"
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
+              className={INPUT_CLS}
             />
             {clientLoading && (
-              <p className="mt-1 text-xs text-zinc-500 flex items-center gap-1">
-                <Loader2 className="w-3 h-3 animate-spin" />
+              <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
                 Buscando tu perfil...
               </p>
             )}
             {state?.error?.phone && (
-              <p className="mt-1 text-xs text-red-400">
-                {state.error.phone[0]}
-              </p>
+              <p className="text-xs text-destructive">{state.error.phone[0]}</p>
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-              <span className="flex items-center gap-1.5">
-                <Coffee className="w-4 h-4 text-zinc-500" />
-                Bebida preferida{" "}
-                <span className="text-zinc-600 font-normal">(opcional)</span>
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              <Coffee className="h-3.5 w-3.5" />
+              Bebida{" "}
+              <span className="font-normal normal-case tracking-normal text-muted-foreground/50">
+                (opcional)
               </span>
             </label>
             <input
@@ -587,16 +582,16 @@ export default function BookingWizard({
               value={drink}
               onChange={(e) => setDrink(e.target.value)}
               placeholder={existingDrink ?? "Café, mate, agua..."}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
+              className={INPUT_CLS}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">
-              <span className="flex items-center gap-1.5">
-                <Music className="w-4 h-4 text-zinc-500" />
-                Música preferida{" "}
-                <span className="text-zinc-600 font-normal">(opcional)</span>
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+              <Music className="h-3.5 w-3.5" />
+              Música{" "}
+              <span className="font-normal normal-case tracking-normal text-muted-foreground/50">
+                (opcional)
               </span>
             </label>
             <input
@@ -605,37 +600,37 @@ export default function BookingWizard({
               value={music}
               onChange={(e) => setMusic(e.target.value)}
               placeholder={existingMusic ?? "Rock, reggaeton, jazz..."}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
+              className={INPUT_CLS}
             />
           </div>
 
           {state?.error?._form && (
-            <div className="rounded-xl bg-red-950/50 border border-red-800 p-4">
-              <p className="text-sm text-red-400">{state.error._form[0]}</p>
+            <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4">
+              <p className="text-sm text-destructive">{state.error._form[0]}</p>
             </div>
           )}
 
-          <div className="flex justify-between pt-2">
+          <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="flex items-center gap-2 text-zinc-400 hover:text-zinc-200 py-3 px-4 rounded-xl transition-colors"
+              className="flex items-center gap-1.5 rounded-xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="h-4 w-4" />
               Atrás
             </button>
             <button
               type="submit"
               disabled={isPending || !name.trim() || !phone.trim()}
-              className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 font-bold py-3 px-6 rounded-xl transition-colors"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-30"
             >
               {isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Confirmando...
                 </>
               ) : (
-                "Confirmar turno"
+                "Confirmar turno →"
               )}
             </button>
           </div>
@@ -645,26 +640,28 @@ export default function BookingWizard({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-sm border-b border-zinc-800">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-4">
           <a
             href={`/${slug}`}
-            className="text-zinc-400 hover:text-zinc-200 transition-colors flex-shrink-0"
+            className="flex shrink-0 items-center justify-center rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="h-4 w-4" />
           </a>
-          <div className="min-w-0">
-            <p className="text-xs text-zinc-500 truncate">{shopName}</p>
-            <p className="font-bold text-zinc-100">Reservar turno</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground truncate">
+              {shopName}
+            </p>
+            <p className="text-sm font-bold tracking-tight">Reservar turno</p>
           </div>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 pb-16">
-        {/* Step indicator */}
-        <div className="flex items-start mb-8">
+      <main className="mx-auto max-w-2xl px-4 py-6 pb-16">
+        {/* Step indicator — patrón Stitch: tabs con underline */}
+        <div className="mb-8 flex border-b border-border">
           {STEP_LABELS.map((label, index) => {
             const stepNum = (index + 1) as 1 | 2 | 3 | 4;
             const isCompleted = step > stepNum;
@@ -672,39 +669,36 @@ export default function BookingWizard({
             return (
               <div
                 key={stepNum}
-                className={`flex items-start ${index < 3 ? "flex-1" : ""}`}
+                className={`flex flex-1 flex-col items-center gap-1.5 pb-3 transition-colors ${
+                  isCurrent
+                    ? "border-b-2 border-primary"
+                    : isCompleted
+                      ? "border-b-2 border-primary/30"
+                      : "border-b-2 border-transparent"
+                }`}
               >
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                      isCompleted
-                        ? "bg-amber-500 text-zinc-950"
-                        : isCurrent
-                          ? "bg-transparent border-2 border-amber-500 text-amber-400"
-                          : "bg-zinc-800 border-2 border-zinc-700 text-zinc-600"
-                    }`}
-                  >
-                    {isCompleted ? <Check className="w-4 h-4" /> : stepNum}
-                  </div>
-                  <span
-                    className={`text-xs mt-1.5 whitespace-nowrap ${
-                      isCurrent
-                        ? "text-amber-400"
-                        : isCompleted
-                          ? "text-zinc-400"
-                          : "text-zinc-600"
-                    }`}
-                  >
-                    {label}
-                  </span>
+                <div
+                  className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold transition-all ${
+                    isCompleted
+                      ? "bg-primary text-primary-foreground"
+                      : isCurrent
+                        ? "bg-primary/15 text-primary ring-2 ring-primary/20"
+                        : "bg-secondary text-muted-foreground/40"
+                  }`}
+                >
+                  {isCompleted ? <Check className="h-3.5 w-3.5 stroke-[2.5]" /> : stepNum}
                 </div>
-                {index < 3 && (
-                  <div
-                    className={`flex-1 h-px mt-4 mx-1 ${
-                      step > stepNum ? "bg-amber-500" : "bg-zinc-800"
-                    }`}
-                  />
-                )}
+                <span
+                  className={`text-[10px] font-semibold uppercase tracking-[0.1em] whitespace-nowrap ${
+                    isCurrent
+                      ? "text-foreground"
+                      : isCompleted
+                        ? "text-muted-foreground"
+                        : "text-muted-foreground/40"
+                  }`}
+                >
+                  {label}
+                </span>
               </div>
             );
           })}

@@ -85,10 +85,7 @@ function getInitials(name: string) {
   return ((words[0]?.[0] ?? "") + (words[1]?.[0] ?? "")).toUpperCase();
 }
 
-
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const data = await getTenantPageData(slug);
   if (!data) return {};
@@ -114,12 +111,8 @@ export default async function TenantLandingPage({ params }: PageProps) {
   const reserveUrl = `/${slug}/reservar`;
 
   const navLinks = [
-    ...(serviceList.length > 0
-      ? [{ href: "#servicios", label: "Servicios" }]
-      : []),
-    ...(barberList.length > 0
-      ? [{ href: "#barberos", label: "Barberos" }]
-      : []),
+    ...(serviceList.length > 0 ? [{ href: "#servicios", label: "Servicios" }] : []),
+    ...(barberList.length > 0 ? [{ href: "#barberos", label: "Barberos" }] : []),
     ...(tenant.address ? [{ href: "#ubicacion", label: "Ubicación" }] : []),
     ...(hours ? [{ href: "#horarios", label: "Horarios" }] : []),
     { href: "#faq", label: "FAQ" },
@@ -128,34 +121,34 @@ export default async function TenantLandingPage({ params }: PageProps) {
   return (
     <>
       {/* Mobile floating CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden p-4 bg-zinc-950/95 backdrop-blur-sm border-t border-zinc-800">
+      <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border bg-background/95 backdrop-blur-sm p-4">
         <Link
           href={reserveUrl}
-          className="block w-full text-center bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-3 px-6 rounded-xl transition-colors"
+          className="block w-full rounded-xl bg-primary py-3 text-center font-bold text-primary-foreground transition-opacity hover:opacity-90"
         >
           Reservar turno
         </Link>
       </div>
 
-      <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <div className="min-h-screen bg-background text-foreground">
         {/* Header */}
-        <header className="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-sm border-b border-zinc-800">
-          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+        <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
             <div className="flex items-center gap-3">
               {tenant.logoUrl ? (
                 <Image
                   src={tenant.logoUrl}
                   alt={`Logo de ${tenant.name}`}
-                  width={40}
-                  height={40}
+                  width={36}
+                  height={36}
                   className="rounded-full object-cover"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center text-zinc-950 font-bold text-sm flex-shrink-0">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                   {getInitials(tenant.name)}
                 </div>
               )}
-              <span className="font-bold text-lg">{tenant.name}</span>
+              <span className="font-bold text-base tracking-tight">{tenant.name}</span>
             </div>
 
             {/* Desktop nav */}
@@ -164,14 +157,14 @@ export default async function TenantLandingPage({ params }: PageProps) {
                 <a
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {link.label}
                 </a>
               ))}
               <Link
                 href={reserveUrl}
-                className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-2 px-4 rounded-lg text-sm transition-colors"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
               >
                 Reservar turno
               </Link>
@@ -183,36 +176,46 @@ export default async function TenantLandingPage({ params }: PageProps) {
           {/* Hero */}
           <section
             id="inicio"
-            className="relative py-24 px-4 text-center overflow-hidden"
+            className="relative overflow-hidden px-4 py-24 text-center"
           >
-            <div className="absolute inset-0 bg-gradient-to-b from-amber-950/20 to-transparent pointer-events-none" />
-            <div className="relative max-w-3xl mx-auto">
+            {/* Ambient glow */}
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                backgroundImage:
+                  "radial-gradient(ellipse 80% 50% at 50% -10%, oklch(0.769 0.188 73 / 0.12) 0%, transparent 70%)",
+              }}
+            />
+            <div className="relative mx-auto max-w-3xl">
               {tenant.logoUrl && (
-                <div className="flex justify-center mb-6">
+                <div className="mb-6 flex justify-center">
                   <Image
                     src={tenant.logoUrl}
                     alt={`Logo de ${tenant.name}`}
-                    width={100}
-                    height={100}
-                    className="rounded-full object-cover border-4 border-amber-500/30"
+                    width={96}
+                    height={96}
+                    className="rounded-full object-cover ring-4 ring-primary/20"
                   />
                 </div>
               )}
-              <h1 className="text-5xl md:text-6xl font-extrabold mb-4 tracking-tight">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Barbería
+              </p>
+              <h1 className="mb-4 text-5xl font-extrabold tracking-tight md:text-6xl">
                 {tenant.name}
               </h1>
               {tenant.address && (
-                <p className="inline-flex items-center gap-2 text-zinc-400 mb-8">
-                  <MapPin className="w-4 h-4" />
+                <p className="mb-8 inline-flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
                   {tenant.address}
                 </p>
               )}
-              <div className="hidden md:flex justify-center mt-2">
+              <div className="hidden justify-center md:flex">
                 <Link
                   href={reserveUrl}
-                  className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold py-3 px-8 rounded-xl text-lg transition-colors"
+                  className="rounded-xl bg-primary px-8 py-3 text-lg font-bold text-primary-foreground transition-opacity hover:opacity-90"
                 >
-                  Reservar turno
+                  Reservar turno →
                 </Link>
               </div>
             </div>
@@ -220,26 +223,32 @@ export default async function TenantLandingPage({ params }: PageProps) {
 
           {/* Servicios */}
           {serviceList.length > 0 && (
-            <section id="servicios" className="py-16 px-4">
-              <div className="max-w-5xl mx-auto">
-                <h2 className="text-3xl font-bold text-amber-400 mb-8">
-                  Servicios
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {serviceList.map((service) => (
-                    <div
-                      key={service.id}
-                      className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-colors"
-                    >
-                      <h3 className="font-semibold text-zinc-100 text-lg">
-                        {service.name}
-                      </h3>
-                      <div className="flex items-center justify-between mt-3">
-                        <span className="text-zinc-500 text-sm flex items-center gap-1.5">
-                          <Clock className="w-4 h-4" />
-                          {formatDuration(service.durationMinutes)}
-                        </span>
-                        <span className="text-amber-400 font-bold text-lg">
+            <section id="servicios" className="px-4 py-16">
+              <div className="mx-auto max-w-5xl">
+                {/* 2-level section header — patrón Stitch */}
+                <div className="mb-8">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    Catálogo
+                  </p>
+                  <h2 className="text-2xl font-bold tracking-tight">Servicios</h2>
+                </div>
+
+                {/* Lista de servicios — patrón Stitch */}
+                <div className="overflow-hidden rounded-2xl border border-border bg-card">
+                  {serviceList.map((service, index) => (
+                    <div key={service.id}>
+                      {index > 0 && <div className="mx-4 h-px bg-border/50" />}
+                      <div className="flex items-center justify-between px-5 py-4">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-foreground">
+                            {service.name}
+                          </p>
+                          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {formatDuration(service.durationMinutes)}
+                          </p>
+                        </div>
+                        <span className="ml-4 shrink-0 text-lg font-bold text-primary">
                           {formatPrice(service.price)}
                         </span>
                       </div>
@@ -252,37 +261,41 @@ export default async function TenantLandingPage({ params }: PageProps) {
 
           {/* Barberos */}
           {barberList.length > 0 && (
-            <section id="barberos" className="py-16 px-4 bg-zinc-900/50">
-              <div className="max-w-5xl mx-auto">
-                <h2 className="text-3xl font-bold text-amber-400 mb-8">
-                  Nuestros Barberos
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+            <section id="barberos" className="px-4 py-16">
+              <div className="mx-auto max-w-5xl">
+                <div className="mb-8">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    Equipo
+                  </p>
+                  <h2 className="text-2xl font-bold tracking-tight">Nuestros Barberos</h2>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                   {barberList.map((barber) => (
                     <div
                       key={barber.id}
-                      className="flex flex-col items-center text-center"
+                      className="flex flex-col items-center rounded-2xl border border-border bg-card p-5 text-center"
                     >
                       {barber.avatarUrl ? (
-                        <div className="relative w-20 h-20 rounded-full overflow-hidden mb-3 ring-2 ring-zinc-700">
+                        <div className="relative mb-3 h-16 w-16 overflow-hidden rounded-full ring-2 ring-primary/20">
                           <Image
                             src={barber.avatarUrl}
                             alt={barber.displayName}
                             fill
-                            sizes="80px"
+                            sizes="64px"
                             className="object-cover"
                           />
                         </div>
                       ) : (
-                        <div className="w-20 h-20 rounded-full bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center mb-3 text-xl font-bold text-amber-400">
+                        <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-lg font-bold text-primary">
                           {getInitials(barber.displayName)}
                         </div>
                       )}
-                      <span className="font-medium text-zinc-100">
+                      <span className="text-sm font-semibold text-foreground">
                         {barber.displayName}
                       </span>
                       {barber.bio && (
-                        <p className="text-xs text-zinc-500 mt-1 line-clamp-2">
+                        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                           {barber.bio}
                         </p>
                       )}
@@ -295,14 +308,27 @@ export default async function TenantLandingPage({ params }: PageProps) {
 
           {/* Ubicación */}
           {tenant.address && (
-            <section id="ubicacion" className="py-16 px-4">
-              <div className="max-w-5xl mx-auto">
-                <h2 className="text-3xl font-bold text-amber-400 mb-8">
-                  Ubicación
-                </h2>
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-zinc-300 text-lg">{tenant.address}</p>
+            <section id="ubicacion" className="px-4 py-16">
+              <div className="mx-auto max-w-5xl">
+                <div className="mb-6">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    Dónde estamos
+                  </p>
+                  <h2 className="text-2xl font-bold tracking-tight">Ubicación</h2>
+                </div>
+                <div className="inline-flex items-start gap-3 rounded-xl border border-border bg-card px-5 py-4">
+                  <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{tenant.address}</p>
+                    <a
+                      href={`https://maps.google.com/?q=${encodeURIComponent(tenant.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 text-xs text-primary hover:underline"
+                    >
+                      Ver en Google Maps →
+                    </a>
+                  </div>
                 </div>
               </div>
             </section>
@@ -310,27 +336,34 @@ export default async function TenantLandingPage({ params }: PageProps) {
 
           {/* Horarios */}
           {hours && (
-            <section id="horarios" className="py-16 px-4 bg-zinc-900/50">
-              <div className="max-w-5xl mx-auto">
-                <h2 className="text-3xl font-bold text-amber-400 mb-8">
-                  Horarios
-                </h2>
-                <div className="max-w-xs">
-                  {DAYS.map(({ key, label }) => {
+            <section id="horarios" className="px-4 py-16">
+              <div className="mx-auto max-w-5xl">
+                <div className="mb-6">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    Atención
+                  </p>
+                  <h2 className="text-2xl font-bold tracking-tight">Horarios</h2>
+                </div>
+                <div className="overflow-hidden rounded-2xl border border-border bg-card">
+                  {DAYS.map(({ key, label }, index) => {
                     const day = hours[key];
                     return (
-                      <div
-                        key={key}
-                        className="flex justify-between py-3 border-b border-zinc-800 last:border-0"
-                      >
-                        <span className="text-zinc-300 font-medium">
-                          {label}
-                        </span>
-                        <span
-                          className={day ? "text-zinc-100" : "text-zinc-600"}
-                        >
-                          {day ? `${day.open} – ${day.close}` : "Cerrado"}
-                        </span>
+                      <div key={key}>
+                        {index > 0 && <div className="mx-4 h-px bg-border/50" />}
+                        <div className="flex items-center justify-between px-5 py-3.5">
+                          <span className="text-sm font-medium text-foreground">
+                            {label}
+                          </span>
+                          <span
+                            className={`text-sm ${
+                              day
+                                ? "text-foreground"
+                                : "text-muted-foreground/50"
+                            }`}
+                          >
+                            {day ? `${day.open} – ${day.close}` : "Cerrado"}
+                          </span>
+                        </div>
                       </div>
                     );
                   })}
@@ -340,33 +373,38 @@ export default async function TenantLandingPage({ params }: PageProps) {
           )}
 
           {/* FAQ */}
-          <section id="faq" className="py-16 px-4">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="text-3xl font-bold text-amber-400 mb-8">
-                Preguntas frecuentes
-              </h2>
+          <section id="faq" className="px-4 py-16">
+            <div className="mx-auto max-w-3xl">
+              <div className="mb-8">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  Dudas
+                </p>
+                <h2 className="text-2xl font-bold tracking-tight">
+                  Preguntas frecuentes
+                </h2>
+              </div>
               <FaqAccordion />
             </div>
           </section>
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-zinc-800 py-10 px-4">
-          <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
-            <div>
-              <p className="font-bold text-zinc-100">{tenant.name}</p>
+        <footer className="border-t border-border px-4 py-10">
+          <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 md:flex-row">
+            <div className="text-center md:text-left">
+              <p className="font-bold text-foreground">{tenant.name}</p>
               {tenant.address && (
-                <p className="text-zinc-500 text-sm mt-1">{tenant.address}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{tenant.address}</p>
               )}
             </div>
-            <p className="text-zinc-600 text-sm">
+            <p className="text-sm text-muted-foreground/60">
               Powered by{" "}
-              <span className="text-amber-500 font-medium">BarberSaaS</span>
+              <span className="font-semibold text-primary">BarberSaaS</span>
             </p>
           </div>
         </footer>
 
-        {/* Spacer so mobile floating button doesn't cover content */}
+        {/* Spacer mobile */}
         <div className="h-24 md:hidden" />
       </div>
     </>

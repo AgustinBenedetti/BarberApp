@@ -7,10 +7,10 @@ import { PlusCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 const INPUT_CLS =
-  "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full rounded-xl border border-input bg-secondary/40 px-4 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/60 disabled:cursor-not-allowed disabled:opacity-50 transition-colors";
 
 const SKIP_LINK_CLS =
-  "flex-1 inline-flex items-center justify-center rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors";
+  "flex-1 inline-flex items-center justify-center rounded-xl border border-border bg-secondary/40 px-4 py-2.5 text-sm font-medium hover:bg-accent transition-colors";
 
 type ServiceRow = {
   name: string;
