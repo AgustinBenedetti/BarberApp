@@ -34,24 +34,24 @@ export default function FaqAccordion() {
       {FAQ_ITEMS.map((item, index) => (
         <div
           key={index}
-          className="border border-zinc-800 rounded-xl overflow-hidden"
+          className="overflow-hidden rounded-xl border border-border"
         >
           <button
-            className="w-full flex items-center justify-between p-5 text-left hover:bg-zinc-900/50 transition-colors"
+            className="flex w-full items-center justify-between p-5 text-left transition-colors hover:bg-accent"
             onClick={() => setOpenIndex(openIndex === index ? null : index)}
             aria-expanded={openIndex === index}
           >
-            <span className="font-medium text-zinc-100 pr-4">
+            <span className="pr-4 font-medium text-foreground">
               {item.question}
             </span>
             <ChevronDown
-              className={`w-5 h-5 text-zinc-400 flex-shrink-0 transition-transform duration-200 ${
+              className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${
                 openIndex === index ? "rotate-180" : ""
               }`}
             />
           </button>
           {openIndex === index && (
-            <div className="px-5 pb-5 text-zinc-400 text-sm leading-relaxed">
+            <div className="px-5 pb-5 text-sm leading-relaxed text-muted-foreground">
               {item.answer}
             </div>
           )}

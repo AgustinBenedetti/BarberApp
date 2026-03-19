@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 const INPUT_CLS =
-  "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full rounded-xl border border-input bg-secondary/40 px-4 py-3 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/60 disabled:cursor-not-allowed disabled:opacity-50 transition-colors";
 
 export function LoginForm() {
   const [state, action, isPending] = useActionState(login, null);
@@ -14,13 +14,13 @@ export function LoginForm() {
   return (
     <form action={action} className="space-y-4">
       {state?.error?._form && (
-        <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
           {state.error._form[0]}
         </div>
       )}
 
       <div className="space-y-1.5">
-        <label htmlFor="email" className="text-sm font-medium">
+        <label htmlFor="email" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Email
         </label>
         <input
@@ -38,7 +38,7 @@ export function LoginForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="password" className="text-sm font-medium">
+        <label htmlFor="password" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Contraseña
         </label>
         <input
@@ -55,19 +55,9 @@ export function LoginForm() {
         )}
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending} className="mt-2 w-full">
         {isPending ? "Iniciando sesión..." : "Iniciar sesión"}
       </Button>
-
-      <p className="text-center text-sm text-muted-foreground">
-        ¿No tenés cuenta?{" "}
-        <Link
-          href="/register"
-          className="font-medium text-primary hover:underline"
-        >
-          Registrate
-        </Link>
-      </p>
     </form>
   );
 }

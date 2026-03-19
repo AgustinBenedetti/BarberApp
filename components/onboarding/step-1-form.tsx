@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { DAYS, DAY_LABELS, type Day } from "@/lib/validations/onboarding";
 
 const INPUT_CLS =
-  "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full rounded-xl border border-input bg-secondary/40 px-4 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/60 disabled:cursor-not-allowed disabled:opacity-50 transition-colors";
 
 const SELECT_CLS =
-  "rounded-lg border border-input bg-background px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
+  "rounded-xl border border-input bg-secondary/40 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors";
 
 // 30-minute intervals from 06:00 to 23:30
 const TIME_OPTIONS = Array.from({ length: 36 }, (_, i) => {

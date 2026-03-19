@@ -4,24 +4,27 @@ import { useActionState } from "react";
 import { register } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Mail } from "lucide-react";
 
 const INPUT_CLS =
-  "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full rounded-xl border border-input bg-secondary/40 px-4 py-3 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/60 disabled:cursor-not-allowed disabled:opacity-50 transition-colors";
 
 export function RegisterForm() {
   const [state, action, isPending] = useActionState(register, null);
 
   if (state?.success) {
     return (
-      <div className="space-y-4 text-center">
-        <div className="text-5xl">📧</div>
+      <div className="space-y-4 py-2 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 border border-primary/20">
+          <Mail className="h-6 w-6 text-primary" />
+        </div>
         <div>
-          <h2 className="text-lg font-semibold">Revisá tu email</h2>
+          <h2 className="text-base font-semibold">Revisá tu email</h2>
           <p className="mt-1 text-sm text-muted-foreground">{state.message}</p>
         </div>
         <Link
           href="/login"
-          className="text-sm font-medium text-primary hover:underline"
+          className="inline-block text-sm font-medium text-primary hover:underline"
         >
           Ir al inicio de sesión
         </Link>
@@ -32,13 +35,13 @@ export function RegisterForm() {
   return (
     <form action={action} className="space-y-4">
       {state?.error?._form && (
-        <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
           {state.error._form[0]}
         </div>
       )}
 
       <div className="space-y-1.5">
-        <label htmlFor="email" className="text-sm font-medium">
+        <label htmlFor="email" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Email
         </label>
         <input
@@ -56,7 +59,7 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="password" className="text-sm font-medium">
+        <label htmlFor="password" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Contraseña
         </label>
         <input
@@ -74,7 +77,7 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="confirmPassword" className="text-sm font-medium">
+        <label htmlFor="confirmPassword" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Confirmar contraseña
         </label>
         <input
@@ -93,16 +96,9 @@ export function RegisterForm() {
         )}
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full">
+      <Button type="submit" disabled={isPending} className="mt-2 w-full">
         {isPending ? "Creando cuenta..." : "Crear cuenta"}
       </Button>
-
-      <p className="text-center text-sm text-muted-foreground">
-        ¿Ya tenés cuenta?{" "}
-        <Link href="/login" className="font-medium text-primary hover:underline">
-          Iniciá sesión
-        </Link>
-      </p>
     </form>
   );
 }
