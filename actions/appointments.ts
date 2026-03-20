@@ -310,6 +310,7 @@ export async function rescheduleAppointment(
       id: appointments.id,
       barberId: appointments.barberId,
       status: appointments.status,
+      notes: appointments.notes,
     })
     .from(appointments)
     .where(
@@ -333,11 +334,16 @@ export async function rescheduleAppointment(
     return { error: { _form: ["No se puede reprogramar este turno"] } };
   }
 
+  const rescheduleNote = "Reprogramado — cliente debe reservar de nuevo";
+  const mergedNotes = appt.notes
+    ? `${rescheduleNote}\n\n${appt.notes}`
+    : rescheduleNote;
+
   await db
     .update(appointments)
     .set({
       status: "cancelled",
-      notes: "Reprogramado — cliente debe reservar de nuevo",
+      notes: mergedNotes,
     })
     .where(eq(appointments.id, appointmentId));
 

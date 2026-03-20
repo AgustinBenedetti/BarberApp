@@ -330,6 +330,11 @@ export default function BookingWizard({
               <span className="line-clamp-2 text-[11px] font-medium leading-tight text-foreground">
                 {barber.displayName}
               </span>
+              {barber.bio && (
+                <span className="line-clamp-2 text-[10px] leading-tight text-muted-foreground">
+                  {barber.bio}
+                </span>
+              )}
               {selectedBarberId === barber.id && (
                 <Check className="h-3.5 w-3.5 text-primary" />
               )}
