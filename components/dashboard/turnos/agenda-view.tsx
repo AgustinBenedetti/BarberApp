@@ -121,11 +121,6 @@ export function AgendaView({
   const [selectedAppt, setSelectedAppt] = useState<AppointmentRow | null>(null);
   const [newOpen, setNewOpen] = useState(false);
 
-  // Need tenantId for new appointment — get from barbers (owner has access to all)
-  // We'll pass it from barbers context. For now, derive it from the appointments or
-  // use a workaround: the tenantId is opaque to client, but createManualAppointment
-  // reads it server-side from auth context. So we don't need to pass it.
-
   const refresh = useCallback(
     (date: string, barberId: string, mode: "day" | "week") => {
       startTransition(async () => {

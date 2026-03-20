@@ -72,10 +72,11 @@ export async function lookupClient(
   preferences: Record<string, string> | null;
 } | null> {
   if (!phone || phone.length < 6) return null;
-  const found = await db.query.clients.findFirst({
-    where: and(eq(clients.tenantId, tenantId), eq(clients.phone, phone)),
-    columns: { id: true, name: true, preferences: true },
-  });
+  const [found] = await db
+    .select({ id: clients.id, name: clients.name, preferences: clients.preferences })
+    .from(clients)
+    .where(and(eq(clients.tenantId, tenantId), eq(clients.phone, phone)))
+    .limit(1);
   return found ?? null;
 }
 

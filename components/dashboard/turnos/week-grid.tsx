@@ -36,9 +36,8 @@ function todayISO(): string {
 }
 
 function formatDayHeader(dateStr: string): { short: string; num: number; month: string } {
-  const [, month, day] = dateStr.split("-").map(Number);
-  const [year, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(year, m - 1, d);
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
   const dow = date.getDay();
   const idx = dow === 0 ? 6 : dow - 1; // Monday=0, Sunday=6
   return {
