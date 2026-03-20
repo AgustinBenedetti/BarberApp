@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Scissors, LogOut, ExternalLink, LayoutDashboard, CalendarClock } from "lucide-react";
+import { Scissors, LogOut, ExternalLink, LayoutDashboard, CalendarClock, Users } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth";
@@ -15,6 +15,7 @@ interface DashboardTopNavProps {
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
   { href: "/dashboard/turnos", label: "Turnos", icon: CalendarClock },
+  { href: "/dashboard/clientes", label: "Clientes", icon: Users },
 ];
 
 export function DashboardTopNav({

@@ -23,6 +23,8 @@
 - /onboarding/step-3 → barberos (opcional)
 - /dashboard → panel principal del dueño (protegida)
 - /dashboard/turnos → sistema de turnos (protegida)
+- /dashboard/clientes → lista de clientes con search y filtros (protegida)
+- /dashboard/clientes/[id] → detalle del cliente (protegida)
 - /[slug] → landing pública de la barbería (no requiere auth)
 - /[slug]/reservar → wizard de reserva de 4 pasos (no requiere auth)
 - /[slug]/reservar/confirmacion → página de éxito con searchParams
@@ -61,6 +63,14 @@
 - rescheduleAppointment bloquea status completed, cancelled y no_show server-side
 - AuthContext exportado — getAppointmentsForDay acepta preloadedCtx opcional para evitar doble query
 - reservar/page.tsx usa React.cache() + unstable_cache(revalidate: 60) igual que la landing
+- "use server" prohíbe exportar valores no-async — PAGE_SIZE es const privado en actions/clients.ts
+- parseDateSafe(dateStr) en client-utils.ts → new Date("YYYY-MM-DT12:00:00") evita timezone bug en Argentina (UTC-3)
+- parseDateSafe solo aplica a campos date de Drizzle (mode: "string") — timestamps ISO usan new Date() directo
+- Paginación con "Ver más" (append) — page validado con Math.max(1, Math.floor(page)) para evitar OFFSET negativo
+- onBlur save en PreferencesEditor y NotesEditor — merge de preferences no sobreescribe keys no enviadas
+- Todas las queries de mutación del CRM tienen tenantId en el WHERE como defensa en profundidad
+- Regla de categorías: visitCount === 1 → Nuevo, 2-5 → Regular, ≥ 6 → VIP (en client-utils.ts)
+- Link "Nuevo turno" abre /{slug}/reservar?phone={phone} — booking wizard ya soporta ese searchParam
 
 ## Estado de Supabase
 - Bucket "logos" creado (público)
@@ -77,14 +87,13 @@
 - ✅ Landing pública /[slug] (7 secciones + 404 personalizada + SEO dinámico)
 - ✅ Wizard de reserva /[slug]/reservar (4 pasos + reconocimiento cliente recurrente)
 - ✅ Sistema de turnos /dashboard/turnos (timeline día + grilla semana + modales)
-- ✅ Issues #17-#29 resueltos (performance, seguridad y deuda técnica)
+- ✅ CRM de clientes /dashboard/clientes (lista + filtros + detalle + edición inline)
 
 ## Issues pendientes
 - #1 — Flujo de invitación de barberos via email (retomar con gestión de barberos)
 
 ## Próximas features
-- [ ] CRM de clientes ← SIGUIENTE
+- [ ] Gestión de barberos y servicios en dashboard ← SIGUIENTE
 - [ ] Notificaciones (WhatsApp/Twilio)
-- [ ] Gestión de barberos y servicios en dashboard
 - [ ] Bloqueo de slots (tabla blocked_slots ya existe en schema)
 - [ ] Rol barber completo (UI para vincular cuenta a registro de barbers)
