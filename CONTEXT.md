@@ -46,6 +46,7 @@
 - Google Maps removido intencionalmente — dirección como texto plano hasta tener ciudad/país en el schema
 - tenant.phone puede ser null — WhatsApp usa wa.me/?text=... sin destinatario en ese caso
 - "Sin preferencia" en barbero se resuelve al primer barbero activo del tenant en getAvailableSlots y createAppointment
+- Conflict check usa detección de solapamiento real (gt/lt) — no startTime exacto
 - Conflict check fuera de la transacción — dentro solo van upsert de client e insert de appointment
 - visitCount se incrementa en cada booking por diseño
 - Confirmación recibe datos via searchParams, sin query a DB — guard redirige a /reservar si faltan params
@@ -55,6 +56,11 @@
 - Timeline visual usa posicionamiento absoluto 1.5px/minuto — default 08:00-20:00 si openingHours es null
 - Modales implementados nativamente sin librería externa (backdrop + Escape listener)
 - getAvailableSlots reutilizado desde actions/booking.ts en el modal de nuevo turno
+- getAvailableSlots excluye appointments cancelled y no_show al calcular slots
+- rescheduleAppointment preserva notas existentes anteponiéndolas a la nota de reprogramación
+- rescheduleAppointment bloquea status completed, cancelled y no_show server-side
+- AuthContext exportado — getAppointmentsForDay acepta preloadedCtx opcional para evitar doble query
+- reservar/page.tsx usa React.cache() + unstable_cache(revalidate: 60) igual que la landing
 
 ## Estado de Supabase
 - Bucket "logos" creado (público)
@@ -71,6 +77,10 @@
 - ✅ Landing pública /[slug] (7 secciones + 404 personalizada + SEO dinámico)
 - ✅ Wizard de reserva /[slug]/reservar (4 pasos + reconocimiento cliente recurrente)
 - ✅ Sistema de turnos /dashboard/turnos (timeline día + grilla semana + modales)
+- ✅ Issues #17-#29 resueltos (performance, seguridad y deuda técnica)
+
+## Issues pendientes
+- #1 — Flujo de invitación de barberos via email (retomar con gestión de barberos)
 
 ## Próximas features
 - [ ] CRM de clientes ← SIGUIENTE
