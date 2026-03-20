@@ -1,3 +1,5 @@
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
@@ -20,44 +22,56 @@ const openingHoursSchema = z.record(
   }),
 );
 
+const fetchReservarData = unstable_cache(
+  async (slug: string) => {
+    const tenant = await db.query.tenants.findFirst({
+      where: eq(tenants.slug, slug),
+    });
+    if (!tenant) return null;
+
+    const [barberList, serviceList] = await Promise.all([
+      db
+        .select({
+          id: barbers.id,
+          displayName: barbers.displayName,
+          bio: barbers.bio,
+          avatarUrl: profiles.avatarUrl,
+        })
+        .from(barbers)
+        .leftJoin(profiles, eq(barbers.profileId, profiles.id))
+        .where(and(eq(barbers.tenantId, tenant.id), eq(barbers.isActive, true))),
+      db
+        .select()
+        .from(services)
+        .where(
+          and(eq(services.tenantId, tenant.id), eq(services.isActive, true)),
+        ),
+    ]);
+
+    return { tenant, barberList, serviceList };
+  },
+  ["tenant-reservar"],
+  { revalidate: 60 },
+);
+
+const getReservarData = cache(fetchReservarData);
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const tenant = await db.query.tenants.findFirst({
-    where: eq(tenants.slug, slug),
-    columns: { name: true },
-  });
-  if (!tenant) return {};
-  return { title: `Reservar turno | ${tenant.name}` };
+  const data = await getReservarData(slug);
+  if (!data) return {};
+  return { title: `Reservar turno | ${data.tenant.name}` };
 }
 
 export default async function ReservarPage({ params }: PageProps) {
   const { slug } = await params;
 
-  const tenant = await db.query.tenants.findFirst({
-    where: eq(tenants.slug, slug),
-  });
-  if (!tenant) notFound();
+  const data = await getReservarData(slug);
+  if (!data) notFound();
 
-  const [barberList, serviceList] = await Promise.all([
-    db
-      .select({
-        id: barbers.id,
-        displayName: barbers.displayName,
-        bio: barbers.bio,
-        avatarUrl: profiles.avatarUrl,
-      })
-      .from(barbers)
-      .leftJoin(profiles, eq(barbers.profileId, profiles.id))
-      .where(and(eq(barbers.tenantId, tenant.id), eq(barbers.isActive, true))),
-    db
-      .select()
-      .from(services)
-      .where(
-        and(eq(services.tenantId, tenant.id), eq(services.isActive, true)),
-      ),
-  ]);
+  const { tenant, barberList, serviceList } = data;
 
   const parsedHours = openingHoursSchema.safeParse(tenant.openingHours);
   const openingHours = parsedHours.success ? parsedHours.data : null;

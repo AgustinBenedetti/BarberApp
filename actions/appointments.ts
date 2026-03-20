@@ -64,7 +64,7 @@ function minutesToTime(minutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-type AuthContext = {
+export type AuthContext = {
   userId: string;
   tenantId: string;
   role: "owner" | "barber";
@@ -152,8 +152,9 @@ async function fetchRows(
 export async function getAppointmentsForDay(
   date: string,
   filterBarberId?: string,
+  preloadedCtx?: AuthContext,
 ): Promise<AppointmentRow[]> {
-  const ctx = await getAuthContext();
+  const ctx = preloadedCtx ?? (await getAuthContext());
   if (!ctx) return [];
 
   const { tenantId, role, ownBarberId } = ctx;

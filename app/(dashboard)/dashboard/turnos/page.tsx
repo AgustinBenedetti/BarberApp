@@ -10,7 +10,7 @@ import {
 } from "@/lib/db/schema";
 import { getAppointmentsForDay } from "@/actions/appointments";
 import { AgendaView } from "@/components/dashboard/turnos/agenda-view";
-import type { BarberOption, ServiceOption } from "@/actions/appointments";
+import type { BarberOption, ServiceOption, AuthContext } from "@/actions/appointments";
 
 export const metadata = {
   title: "Turnos — BarberSaaS",
@@ -57,6 +57,13 @@ export default async function TurnosPage() {
     ownBarberId = barber?.id ?? null;
   }
 
+  const preloadedCtx: AuthContext = {
+    userId: user.id,
+    tenantId,
+    role: userRole,
+    ownBarberId,
+  };
+
   const [tenant, tenantBarbers, tenantServices, initialAppointments] =
     await Promise.all([
       db.query.tenants.findFirst({
@@ -88,7 +95,7 @@ export default async function TurnosPage() {
           ),
         )
         .orderBy(servicesTable.name),
-      getAppointmentsForDay(today),
+      getAppointmentsForDay(today, undefined, preloadedCtx),
     ]);
 
   const barbers: BarberOption[] = tenantBarbers;
