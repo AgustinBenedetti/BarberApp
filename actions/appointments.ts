@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, gte, ilike, lte, notInArray, or } from "drizzle-orm";
+import { and, eq, gt, gte, ilike, lt, lte, notInArray, or } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import {
@@ -329,7 +329,7 @@ export async function rescheduleAppointment(
     return { error: { _form: ["No autorizado"] } };
   }
 
-  if (appt.status === "completed" || appt.status === "cancelled") {
+  if (appt.status === "completed" || appt.status === "cancelled" || appt.status === "no_show") {
     return { error: { _form: ["No se puede reprogramar este turno"] } };
   }
 
@@ -439,7 +439,8 @@ export async function createManualAppointment(
         eq(appointments.tenantId, tenantId),
         eq(appointments.barberId, data.barberId),
         eq(appointments.date, data.date),
-        eq(appointments.startTime, data.startTime),
+        gt(appointments.endTime, data.startTime),
+        lt(appointments.startTime, endTime),
         notInArray(appointments.status, ["cancelled", "no_show"]),
       ),
     )

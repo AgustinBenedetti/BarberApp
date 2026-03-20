@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, and, notInArray } from "drizzle-orm";
+import { eq, and, notInArray, gt, lt } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import {
@@ -161,6 +161,7 @@ export async function getAvailableSlots(
           eq(appointments.tenantId, tenantId),
           eq(appointments.barberId, effectiveBarberId),
           eq(appointments.date, date),
+          notInArray(appointments.status, ["cancelled", "no_show"]),
         ),
       ),
     db
@@ -285,7 +286,8 @@ export async function createAppointment(
         eq(appointments.tenantId, tenantId),
         eq(appointments.barberId, resolvedBarberId),
         eq(appointments.date, date),
-        eq(appointments.startTime, startTime),
+        gt(appointments.endTime, startTime),
+        lt(appointments.startTime, endTime),
         notInArray(appointments.status, ["cancelled", "no_show"]),
       ),
     )
