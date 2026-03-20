@@ -22,6 +22,7 @@
 - /onboarding/step-2 → servicios (opcional)
 - /onboarding/step-3 → barberos (opcional)
 - /dashboard → panel principal del dueño (protegida)
+- /dashboard/turnos → sistema de turnos (protegida)
 - /[slug] → landing pública de la barbería (no requiere auth)
 - /[slug]/reservar → wizard de reserva de 4 pasos (no requiere auth)
 - /[slug]/reservar/confirmacion → página de éxito con searchParams
@@ -48,6 +49,12 @@
 - Conflict check fuera de la transacción — dentro solo van upsert de client e insert de appointment
 - visitCount se incrementa en cada booking por diseño
 - Confirmación recibe datos via searchParams, sin query a DB — guard redirige a /reservar si faltan params
+- getAuthContext() en actions/appointments.ts verifica sesión + rol + ownBarberId del barbero
+- Barber con ownBarberId null → acceso denegado inmediatamente (no bypassa autorización)
+- clientId en createManualAppointment validado contra tenantId antes de usar
+- Timeline visual usa posicionamiento absoluto 1.5px/minuto — default 08:00-20:00 si openingHours es null
+- Modales implementados nativamente sin librería externa (backdrop + Escape listener)
+- getAvailableSlots reutilizado desde actions/booking.ts en el modal de nuevo turno
 
 ## Estado de Supabase
 - Bucket "logos" creado (público)
@@ -63,9 +70,11 @@
 - ✅ Dashboard principal con botón "Ver mi landing"
 - ✅ Landing pública /[slug] (7 secciones + 404 personalizada + SEO dinámico)
 - ✅ Wizard de reserva /[slug]/reservar (4 pasos + reconocimiento cliente recurrente)
+- ✅ Sistema de turnos /dashboard/turnos (timeline día + grilla semana + modales)
 
 ## Próximas features
-- [ ] Sistema de turnos (calendario en dashboard) ← SIGUIENTE
-- [ ] CRM de clientes
+- [ ] CRM de clientes ← SIGUIENTE
 - [ ] Notificaciones (WhatsApp/Twilio)
 - [ ] Gestión de barberos y servicios en dashboard
+- [ ] Bloqueo de slots (tabla blocked_slots ya existe en schema)
+- [ ] Rol barber completo (UI para vincular cuenta a registro de barbers)
