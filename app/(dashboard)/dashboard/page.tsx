@@ -183,7 +183,7 @@ export default async function DashboardPage() {
 
         <div className="overflow-hidden rounded-xl border border-border bg-card">
           <Link
-            href="/onboarding/step-2"
+            href="/dashboard/servicios"
             className="group flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-accent"
           >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -201,7 +201,7 @@ export default async function DashboardPage() {
           <div className="h-px bg-border/50 mx-4" />
 
           <Link
-            href="/onboarding/step-3"
+            href="/dashboard/barberos"
             className="group flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-accent"
           >
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">

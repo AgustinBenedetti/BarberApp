@@ -63,6 +63,7 @@ export function BarberForm({ barber }: BarberFormProps) {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
     barber?.avatarUrl ?? null,
   );
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   // Delete state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -86,6 +87,17 @@ export function BarberForm({ barber }: BarberFormProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("El avatar no puede superar los 5 MB");
+      e.target.value = "";
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("El archivo debe ser una imagen");
+      e.target.value = "";
+      return;
+    }
+    setPhotoError(null);
     const url = URL.createObjectURL(file);
     setAvatarPreview(url);
   };
@@ -152,9 +164,13 @@ export function BarberForm({ barber }: BarberFormProps) {
                 onChange={handleFileChange}
                 className="w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground"
               />
-              <p className="mt-1 text-xs text-muted-foreground">
-                JPG, PNG, WEBP — máx. 5 MB
-              </p>
+              {photoError ? (
+                <p className="mt-1 text-xs text-destructive">{photoError}</p>
+              ) : (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  JPG, PNG, WEBP — máx. 5 MB
+                </p>
+              )}
             </div>
           </div>
         </div>

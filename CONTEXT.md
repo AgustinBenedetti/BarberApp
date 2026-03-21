@@ -57,7 +57,8 @@
 - Conflict check usa detección de solapamiento real (gt/lt) — no startTime exacto
 - Conflict check fuera de la transacción — dentro solo van upsert de client e insert de appointment
 - visitCount se incrementa en cada booking por diseño
-- Confirmación recibe datos via searchParams, sin query a DB — guard redirige a /reservar si faltan params
+- Confirmación recibe datos via searchParams, sin query a DB — guard redirige a /reservar?error=expired si faltan params
+- Wizard muestra banner rojo con mensaje de error si recibe ?error=expired
 - getAuthContext() en actions/appointments.ts verifica sesión + rol + ownBarberId del barbero
 - Barber con ownBarberId null → acceso denegado inmediatamente (no bypassa autorización)
 - clientId en createManualAppointment validado contra tenantId antes de usar
@@ -76,15 +77,20 @@
 - onBlur save en PreferencesEditor y NotesEditor — merge de preferences no sobreescribe keys no enviadas
 - Todas las queries de mutación del CRM tienen tenantId en el WHERE como defensa en profundidad
 - Regla de categorías: visitCount === 1 → Nuevo, 2-5 → Regular, ≥ 6 → VIP (en client-utils.ts)
-- Link "Nuevo turno" abre /{slug}/reservar?phone={phone} — booking wizard ya soporta ese searchParam
+- Link "Nuevo turno" abre /{slug}/reservar?phone={phone} — booking wizard lee initialPhone y dispara lookupClient automáticamente si length >= 6
 - getOwnerAuth() en actions/barbers-services.ts — retorna null para cualquier rol que no sea owner
 - getOwnerAuth() retorna tenantSlug para poder llamar revalidatePath tras mutaciones
 - Barbero sin cuenta: profileId = null. Barbero invitado: inviteUserByEmail → profile con role='barber' + barbers vinculado
 - Delete guards en barberos y servicios: turnos futuros activos primero, luego historial (FK restrict)
 - createService y updateService usan .returning() — ServicesView actualiza lista localmente sin router.refresh()
 - Las 8 mutaciones de barberos/servicios llaman revalidatePath(/${slug}) y revalidatePath(/${slug}/reservar)
+- saveStep1, saveStep2 y saveStep3 llaman revalidatePath tras guardar — landing siempre muestra datos frescos post-onboarding
 - DashboardTopNav recibe role — tabs Barberos y Servicios visibles solo para owners
-- Avatar upload valida size (5MB) y MIME server-side antes de subir a bucket "avatars"
+- Avatar upload valida size (5MB) y MIME client-side en barber-form.tsx — previene crash del body parser de Next.js (límite 1MB)
+- Validación server-side de avatar se mantiene como segunda línea de defensa
+- Formato canónico de availability: { monday: { closed, open, close } } — igual que openingHours del tenant
+- Sin barberos activos → mensaje claro en Step 2 del wizard + botón Continuar disabled
+- openingHours null → mensaje claro en Step 3 del wizard + date strip oculto
 
 ## Estado de Supabase
 - Bucket "logos" creado (público)
@@ -107,17 +113,20 @@
 - ✅ CRM de clientes /dashboard/clientes (lista + filtros + detalle + edición inline)
 - ✅ Gestión de barberos /dashboard/barberos (crear, editar, invitar, activar/desactivar)
 - ✅ Gestión de servicios /dashboard/servicios (crear, editar, activar/desactivar)
+- ✅ Hotfix: availability format, photo upload, dashboard links, booking edge cases, cache revalidation
 
 ## Issues pendientes
-- #1 — Flujo de invitación de barberos via email (retomar con gestión de barberos) ✅ resuelto en esta feature
 - #30 — RLS policies eliminadas por drizzle-kit push — recrear antes de producción
 - #31 — Path de avatar frágil al reemplazar foto
 - #32 — Toggles no revierten estado en error de servidor
 - #33 — DaySchedule duplicado en barber-form.tsx
 - #34 — onSuccess inestable en useEffect de ServiceForm
 - #35 — Header no se actualiza tras editar barbero
+- #36 — Dirección estructurada con campos separados y link Google Maps exacto
 
 ## Próximas features
 - [ ] Notificaciones (WhatsApp/Twilio) ← SIGUIENTE
 - [ ] Bloqueo de slots (tabla blocked_slots ya existe en schema)
 - [ ] Rol barber completo (UI para vincular cuenta existente a registro de barbers)
+- [ ] Revenue dashboard
+- [ ] Recordatorios inteligentes

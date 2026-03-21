@@ -68,7 +68,7 @@ export default async function ConfirmacionPage({
   const sp = await searchParams;
 
   if (!sp.date || !sp.service) {
-    redirect(`/${slug}/reservar`);
+    redirect(`/${slug}/reservar?error=expired`);
   }
 
   const shop = sp.shop ?? "";
