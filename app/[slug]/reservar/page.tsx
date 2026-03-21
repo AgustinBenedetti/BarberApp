@@ -11,6 +11,7 @@ import BookingWizard from "@/components/booking/booking-wizard";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string>>;
 }
 
 const openingHoursSchema = z.record(
@@ -58,15 +59,23 @@ const getReservarData = cache(fetchReservarData);
 
 export async function generateMetadata({
   params,
-}: PageProps): Promise<Metadata> {
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
   const data = await getReservarData(slug);
   if (!data) return {};
   return { title: `Reservar turno | ${data.tenant.name}` };
 }
 
-export default async function ReservarPage({ params }: PageProps) {
+export default async function ReservarPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const sp = await searchParams;
+  const initialPhone = sp.phone ?? undefined;
+  const errorMessage =
+    sp.error === "expired"
+      ? "Tu sesión de reserva expiró. Por favor intentá de nuevo."
+      : undefined;
 
   const data = await getReservarData(slug);
   if (!data) notFound();
@@ -94,6 +103,8 @@ export default async function ReservarPage({ params }: PageProps) {
         avatarUrl: b.avatarUrl ?? null,
       }))}
       openingHours={openingHours}
+      initialPhone={initialPhone}
+      errorMessage={errorMessage}
     />
   );
 }

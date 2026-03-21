@@ -10,6 +10,7 @@ import {
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import {
   step1Schema,
   step2Schema,
@@ -125,6 +126,8 @@ export async function saveStep1(
     return { error: { _form: ["Error al actualizar la sesión. Intentá de nuevo."] } };
   }
 
+  revalidatePath(`/${slug}`);
+  revalidatePath(`/${slug}/reservar`);
   redirect("/onboarding/step-2");
 }
 
@@ -172,6 +175,15 @@ export async function saveStep2(
       );
     }
   });
+
+  const tenant2 = await db.query.tenants.findFirst({
+    where: eq(tenants.id, tenantId),
+    columns: { slug: true },
+  });
+  if (tenant2) {
+    revalidatePath(`/${tenant2.slug}`);
+    revalidatePath(`/${tenant2.slug}/reservar`);
+  }
 
   redirect("/onboarding/step-3");
 }
@@ -242,6 +254,15 @@ export async function saveStep3(
       await tx.insert(barbers).values(toInsert);
     }
   });
+
+  const tenant3 = await db.query.tenants.findFirst({
+    where: eq(tenants.id, tenantId),
+    columns: { slug: true },
+  });
+  if (tenant3) {
+    revalidatePath(`/${tenant3.slug}`);
+    revalidatePath(`/${tenant3.slug}/reservar`);
+  }
 
   redirect("/dashboard");
 }

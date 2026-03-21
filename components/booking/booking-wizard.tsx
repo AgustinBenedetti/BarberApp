@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useActionState } from "react";
+import { useState, useTransition, useActionState, useEffect } from "react";
 import Image from "next/image";
 import {
   Check,
@@ -46,6 +46,8 @@ interface BookingWizardProps {
   services: ServiceItem[];
   barbers: BarberItem[];
   openingHours: Record<string, OpeningHoursDay> | null;
+  initialPhone?: string;
+  errorMessage?: string;
 }
 
 const WEEK_DAYS = [
@@ -132,6 +134,8 @@ export default function BookingWizard({
   services,
   barbers,
   openingHours,
+  initialPhone,
+  errorMessage,
 }: BookingWizardProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
@@ -141,7 +145,7 @@ export default function BookingWizard({
   const [slots, setSlots] = useState<string[]>([]);
   const [slotsLoading, startSlotTransition] = useTransition();
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(initialPhone ?? "");
   const [drink, setDrink] = useState("");
   const [music, setMusic] = useState("");
   const [existingClient, setExistingClient] = useState<{
@@ -150,6 +154,22 @@ export default function BookingWizard({
     preferences: Record<string, string> | null;
   } | null>(null);
   const [clientLoading, startClientTransition] = useTransition();
+
+  useEffect(() => {
+    if (initialPhone && initialPhone.length >= 6) {
+      startClientTransition(async () => {
+        const found = await lookupClient(tenantId, initialPhone);
+        if (found) {
+          setExistingClient(found);
+          setName(found.name);
+          if (found.preferences?.drink) setDrink(found.preferences.drink);
+          if (found.preferences?.music) setMusic(found.preferences.music);
+        }
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [state, formAction, isPending] = useActionState<
     ActionState | null,
     FormData
@@ -277,6 +297,7 @@ export default function BookingWizard({
 
   // Step 2 — barber selection
   function renderStep2() {
+    const noBarbers = barbers.length === 0;
     return (
       <div>
         <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -287,7 +308,13 @@ export default function BookingWizard({
           O continuá sin preferencia
         </p>
 
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        {noBarbers ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">
+            Esta barbería no tiene barberos disponibles en este momento. Intentá más tarde.
+          </p>
+        ) : null}
+
+        <div className={noBarbers ? "hidden" : "grid grid-cols-3 gap-2 sm:grid-cols-4"}>
           {/* Sin preferencia */}
           <button
             onClick={() => setSelectedBarberId(NO_PREFERENCE_ID)}
@@ -351,7 +378,7 @@ export default function BookingWizard({
             Atrás
           </button>
           <button
-            disabled={!selectedBarberId}
+            disabled={!selectedBarberId || noBarbers}
             onClick={() => {
               setSelectedDate(null);
               setSelectedTime(null);
@@ -370,6 +397,30 @@ export default function BookingWizard({
   // Step 3 — date + time
   function renderStep3() {
     if (!selectedService) return null;
+
+    if (openingHours === null) {
+      return (
+        <div>
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Paso 3
+          </p>
+          <h2 className="mb-1 text-2xl font-bold tracking-tight">Fecha y horario</h2>
+          <p className="mt-10 text-center text-sm text-muted-foreground">
+            Esta barbería no tiene horarios configurados aún.
+          </p>
+          <div className="mt-6">
+            <button
+              onClick={() => setStep(2)}
+              className="flex items-center gap-1.5 rounded-xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Atrás
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div>
         <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -665,6 +716,11 @@ export default function BookingWizard({
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-6 pb-16">
+        {errorMessage && (
+          <div className="mb-6 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {errorMessage}
+          </div>
+        )}
         {/* Step indicator — patrón Stitch: tabs con underline */}
         <div className="mb-8 flex border-b border-border">
           {STEP_LABELS.map((label, index) => {

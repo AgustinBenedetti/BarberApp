@@ -14,10 +14,9 @@ import {
 import { bookingSchema } from "@/lib/validations/booking";
 import type { ActionState } from "@/actions/auth";
 
-type TimeInterval = { start: string; end: string };
-type BarberAvailability = Record<string, TimeInterval[]>;
 type OpeningHoursDay = { closed: boolean; open?: string; close?: string };
 type OpeningHoursMap = Record<string, OpeningHoursDay>;
+type BarberAvailability = Record<string, OpeningHoursDay>;
 
 const WEEK_DAYS = [
   "sunday",
@@ -129,11 +128,10 @@ export async function getAvailableSlots(
     | null
     | undefined;
 
-  if (availability?.[dayKey]) {
-    for (const interval of availability[dayKey]) {
-      baseSlots.push(
-        ...generateSlots(interval.start, interval.end, durationMinutes),
-      );
+  const barberDay = availability?.[dayKey];
+  if (barberDay) {
+    if (!barberDay.closed && barberDay.open && barberDay.close) {
+      baseSlots = generateSlots(barberDay.open, barberDay.close, durationMinutes);
     }
   } else {
     const day = openingHours?.[dayKey];
