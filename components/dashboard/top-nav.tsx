@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Scissors, LogOut, ExternalLink, LayoutDashboard, CalendarClock, Users } from "lucide-react";
+import { Scissors, LogOut, ExternalLink, LayoutDashboard, CalendarClock, Users, UserCog, Tag } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { logout } from "@/actions/auth";
@@ -10,20 +10,30 @@ interface DashboardTopNavProps {
   userEmail?: string;
   tenantSlug?: string;
   tenantName?: string;
+  role?: string;
 }
 
-const NAV_ITEMS = [
+const BASE_NAV_ITEMS = [
   { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
   { href: "/dashboard/turnos", label: "Turnos", icon: CalendarClock },
   { href: "/dashboard/clientes", label: "Clientes", icon: Users },
+];
+
+const OWNER_NAV_ITEMS = [
+  { href: "/dashboard/barberos", label: "Barberos", icon: UserCog },
+  { href: "/dashboard/servicios", label: "Servicios", icon: Tag },
 ];
 
 export function DashboardTopNav({
   userEmail,
   tenantSlug,
   tenantName,
+  role,
 }: DashboardTopNavProps) {
   const pathname = usePathname();
+  const navItems = role === "owner"
+    ? [...BASE_NAV_ITEMS, ...OWNER_NAV_ITEMS]
+    : BASE_NAV_ITEMS;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
@@ -86,8 +96,8 @@ export function DashboardTopNav({
       </div>
 
       {/* Nav tabs row */}
-      <div className="mx-auto flex max-w-5xl items-end gap-0 px-4">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      <div className="mx-auto flex max-w-5xl items-end gap-0 overflow-x-auto px-4">
+        {navItems.map(({ href, label, icon: Icon }) => {
           const isActive =
             href === "/dashboard"
               ? pathname === "/dashboard"

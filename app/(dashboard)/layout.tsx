@@ -40,6 +40,7 @@ export default async function DashboardLayout({
         userEmail={user.email}
         tenantSlug={tenantSlug}
         tenantName={tenantName}
+        role={profile?.role ?? undefined}
       />
       <main>{children}</main>
     </div>
