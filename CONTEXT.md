@@ -25,6 +25,10 @@
 - /dashboard/turnos → sistema de turnos (protegida)
 - /dashboard/clientes → lista de clientes con search y filtros (protegida)
 - /dashboard/clientes/[id] → detalle del cliente (protegida)
+- /dashboard/barberos → lista de barberos (solo owner)
+- /dashboard/barberos/nuevo → crear barbero (solo owner)
+- /dashboard/barberos/[id] → editar barbero (solo owner)
+- /dashboard/servicios → lista + drawer CRUD servicios (solo owner)
 - /[slug] → landing pública de la barbería (no requiere auth)
 - /[slug]/reservar → wizard de reserva de 4 pasos (no requiere auth)
 - /[slug]/reservar/confirmacion → página de éxito con searchParams
@@ -32,6 +36,8 @@
 ## Decisiones técnicas importantes
 - profiles.tenantId es nullable — se asigna en Step 1 del onboarding
 - barbers.profileId es nullable — barberos pueden existir sin cuenta
+- barbers.avatarUrl independiente de profiles.avatarUrl — foto del dashboard se guarda en barbers
+- Landing y wizard usan COALESCE(barbers.avatarUrl, profiles.avatarUrl) — prefiere foto del dashboard, cae a perfil como fallback
 - Drizzle bypassa RLS — autorización manual en Server Actions via supabase.auth.getUser()
 - Middleware chequea user.app_metadata?.tenant_id (del JWT, sin query a DB)
 - Middleware excluye /[slug] y /[slug]/reservar de la protección de auth
@@ -71,12 +77,23 @@
 - Todas las queries de mutación del CRM tienen tenantId en el WHERE como defensa en profundidad
 - Regla de categorías: visitCount === 1 → Nuevo, 2-5 → Regular, ≥ 6 → VIP (en client-utils.ts)
 - Link "Nuevo turno" abre /{slug}/reservar?phone={phone} — booking wizard ya soporta ese searchParam
+- getOwnerAuth() en actions/barbers-services.ts — retorna null para cualquier rol que no sea owner
+- getOwnerAuth() retorna tenantSlug para poder llamar revalidatePath tras mutaciones
+- Barbero sin cuenta: profileId = null. Barbero invitado: inviteUserByEmail → profile con role='barber' + barbers vinculado
+- Delete guards en barberos y servicios: turnos futuros activos primero, luego historial (FK restrict)
+- createService y updateService usan .returning() — ServicesView actualiza lista localmente sin router.refresh()
+- Las 8 mutaciones de barberos/servicios llaman revalidatePath(/${slug}) y revalidatePath(/${slug}/reservar)
+- DashboardTopNav recibe role — tabs Barberos y Servicios visibles solo para owners
+- Avatar upload valida size (5MB) y MIME server-side antes de subir a bucket "avatars"
 
 ## Estado de Supabase
 - Bucket "logos" creado (público)
+- Bucket "avatars" creado (público)
 - Migration 0002_nullable_columns.sql aplicada
+- Columna avatar_url agregada a tabla barbers (via db:push)
 - Trigger on_auth_user_created con EXCEPTION handler
 - Redirect URL configurada: http://localhost:3000/**
+- ⚠️ RLS policies eliminadas por db:push — recrear antes de producción (issue #30)
 
 ## Features completadas
 - ✅ Scaffold inicial (Next.js 16, Drizzle, Supabase, shadcn/ui)
@@ -88,12 +105,19 @@
 - ✅ Wizard de reserva /[slug]/reservar (4 pasos + reconocimiento cliente recurrente)
 - ✅ Sistema de turnos /dashboard/turnos (timeline día + grilla semana + modales)
 - ✅ CRM de clientes /dashboard/clientes (lista + filtros + detalle + edición inline)
+- ✅ Gestión de barberos /dashboard/barberos (crear, editar, invitar, activar/desactivar)
+- ✅ Gestión de servicios /dashboard/servicios (crear, editar, activar/desactivar)
 
 ## Issues pendientes
-- #1 — Flujo de invitación de barberos via email (retomar con gestión de barberos)
+- #1 — Flujo de invitación de barberos via email (retomar con gestión de barberos) ✅ resuelto en esta feature
+- #30 — RLS policies eliminadas por drizzle-kit push — recrear antes de producción
+- #31 — Path de avatar frágil al reemplazar foto
+- #32 — Toggles no revierten estado en error de servidor
+- #33 — DaySchedule duplicado en barber-form.tsx
+- #34 — onSuccess inestable en useEffect de ServiceForm
+- #35 — Header no se actualiza tras editar barbero
 
 ## Próximas features
-- [ ] Gestión de barberos y servicios en dashboard ← SIGUIENTE
-- [ ] Notificaciones (WhatsApp/Twilio)
+- [ ] Notificaciones (WhatsApp/Twilio) ← SIGUIENTE
 - [ ] Bloqueo de slots (tabla blocked_slots ya existe en schema)
-- [ ] Rol barber completo (UI para vincular cuenta a registro de barbers)
+- [ ] Rol barber completo (UI para vincular cuenta existente a registro de barbers)

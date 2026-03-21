@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Metadata } from "next";
 
@@ -35,7 +35,7 @@ const fetchReservarData = unstable_cache(
           id: barbers.id,
           displayName: barbers.displayName,
           bio: barbers.bio,
-          avatarUrl: profiles.avatarUrl,
+          avatarUrl: sql<string | null>`COALESCE(${barbers.avatarUrl}, ${profiles.avatarUrl})`,
         })
         .from(barbers)
         .leftJoin(profiles, eq(barbers.profileId, profiles.id))

@@ -18,7 +18,8 @@ export const barbers = pgTable("barbers", {
     .references(() => profiles.id, { onDelete: "set null" }),
   displayName: text("display_name").notNull(),
   bio: text("bio"),
-  // Ejemplo: { monday: [{ start: "09:00", end: "13:00" }, { start: "15:00", end: "19:00" }] }
+  avatarUrl: text("avatar_url"),
+  // Ejemplo: { monday: { closed: false, open: "09:00", close: "19:00" } }
   availability: jsonb("availability"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
