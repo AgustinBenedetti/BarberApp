@@ -72,13 +72,12 @@ function todayISO(): string {
 
 async function uploadAvatar(
   tenantId: string,
+  barberId: string,
   file: File,
-  existingPath?: string,
 ): Promise<string | null> {
   try {
     const adminClient = await createAdminClient();
-    const ext = file.name.split(".").pop() ?? "jpg";
-    const filePath = existingPath ?? `${tenantId}/${Date.now()}.${ext}`;
+    const filePath = `${tenantId}/${barberId}`;
     const buffer = await file.arrayBuffer();
 
     const { error } = await adminClient.storage
@@ -215,6 +214,8 @@ export async function createBarber(
     return { error: { _form: ["Horario inválido"] } };
   }
 
+  const barberId = crypto.randomUUID();
+
   let avatarUrl: string | null = null;
   const photoFile = formData.get("photo") as File | null;
   if (photoFile && photoFile.size > 0) {
@@ -224,11 +225,12 @@ export async function createBarber(
     if (!photoFile.type.startsWith("image/")) {
       return { error: { _form: ["El archivo debe ser una imagen"] } };
     }
-    avatarUrl = await uploadAvatar(ctx.tenantId, photoFile);
+    avatarUrl = await uploadAvatar(ctx.tenantId, barberId, photoFile);
   }
 
   if (mode === "no_account") {
     await db.insert(barbers).values({
+      id: barberId,
       tenantId: ctx.tenantId,
       profileId: null,
       displayName,
@@ -272,6 +274,7 @@ export async function createBarber(
     .onConflictDoNothing();
 
   await db.insert(barbers).values({
+    id: barberId,
     tenantId: ctx.tenantId,
     profileId: invitedUserId,
     displayName,
@@ -337,10 +340,7 @@ export async function updateBarber(
     if (!photoFile.type.startsWith("image/")) {
       return { error: { _form: ["El archivo debe ser una imagen"] } };
     }
-    const existingPath = existing.avatarUrl
-      ? existing.avatarUrl.split("/storage/v1/object/public/avatars/")[1]
-      : undefined;
-    const uploaded = await uploadAvatar(ctx.tenantId, photoFile, existingPath);
+    const uploaded = await uploadAvatar(ctx.tenantId, id, photoFile);
     if (uploaded) avatarUrl = uploaded;
   }
 
