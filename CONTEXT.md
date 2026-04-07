@@ -37,6 +37,7 @@
 - profiles.tenantId es nullable — se asigna en Step 1 del onboarding
 - barbers.profileId es nullable — barberos pueden existir sin cuenta
 - barbers.avatarUrl independiente de profiles.avatarUrl — foto del dashboard se guarda en barbers
+- Avatar path determinístico: ${tenantId}/${barberId} — sin parseo de URL, upsert automático en Storage
 - Landing y wizard usan COALESCE(barbers.avatarUrl, profiles.avatarUrl) — prefiere foto del dashboard, cae a perfil como fallback
 - Drizzle bypassa RLS — autorización manual en Server Actions via supabase.auth.getUser()
 - Middleware chequea user.app_metadata?.tenant_id (del JWT, sin query a DB)
@@ -91,15 +92,20 @@
 - Formato canónico de availability: { monday: { closed, open, close } } — igual que openingHours del tenant
 - Sin barberos activos → mensaje claro en Step 2 del wizard + botón Continuar disabled
 - openingHours null → mensaje claro en Step 3 del wizard + date strip oculto
+- Toggles de barberos y servicios revierten optimistic update si server action retorna error
+- DaySchedule importado desde actions/barbers-services.ts — no redefinido localmente
+- closeDrawer envuelto en useCallback([]) en services-view.tsx
+- router.refresh() llamado tras guardar barbero en modo edición — h1 del header se actualiza
 
 ## Estado de Supabase
 - Bucket "logos" creado (público)
 - Bucket "avatars" creado (público)
 - Migration 0002_nullable_columns.sql aplicada
+- Migration 0003_recreate_rls_policies.sql aplicada ✅
 - Columna avatar_url agregada a tabla barbers (via db:push)
 - Trigger on_auth_user_created con EXCEPTION handler
+- RLS habilitado en todas las tablas ✅
 - Redirect URL configurada: http://localhost:3000/**
-- ⚠️ RLS policies eliminadas por db:push — recrear antes de producción (issue #30)
 
 ## Features completadas
 - ✅ Scaffold inicial (Next.js 16, Drizzle, Supabase, shadcn/ui)
@@ -114,18 +120,14 @@
 - ✅ Gestión de barberos /dashboard/barberos (crear, editar, invitar, activar/desactivar)
 - ✅ Gestión de servicios /dashboard/servicios (crear, editar, activar/desactivar)
 - ✅ Hotfix: availability format, photo upload, dashboard links, booking edge cases, cache revalidation
+- ✅ Issues #36-#40 resueltos (toggles, avatar path, DaySchedule, closeDrawer, router.refresh)
+- ✅ RLS policies recreadas (migration 0003)
 
 ## Issues pendientes
-- #30 — RLS policies eliminadas por drizzle-kit push — recrear antes de producción
-- #31 — Path de avatar frágil al reemplazar foto
-- #32 — Toggles no revierten estado en error de servidor
-- #33 — DaySchedule duplicado en barber-form.tsx
-- #34 — onSuccess inestable en useEffect de ServiceForm
-- #35 — Header no se actualiza tras editar barbero
-- #36 — Dirección estructurada con campos separados y link Google Maps exacto
+- #42 — Dirección estructurada con campos separados y link Google Maps exacto
 
 ## Próximas features
-- [ ] Notificaciones (WhatsApp/Twilio) ← SIGUIENTE
+- [ ] Notificaciones (WhatsApp/Twilio)
 - [ ] Bloqueo de slots (tabla blocked_slots ya existe en schema)
 - [ ] Rol barber completo (UI para vincular cuenta existente a registro de barbers)
 - [ ] Revenue dashboard
