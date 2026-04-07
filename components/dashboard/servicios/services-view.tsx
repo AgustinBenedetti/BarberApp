@@ -49,8 +49,12 @@ function ServiceToggle({
 
   const handleClick = () => {
     startTransition(async () => {
-      await toggleServiceActive(serviceId, !isActive);
-      onToggle(serviceId, !isActive);
+      const result = await toggleServiceActive(serviceId, !isActive);
+      if (result.error) {
+        onToggle(serviceId, isActive);
+      } else {
+        onToggle(serviceId, !isActive);
+      }
     });
   };
 
