@@ -57,8 +57,12 @@ function ToggleButton({
 
   const handleClick = () => {
     startTransition(async () => {
-      await toggleBarberActive(barberId, !isActive);
-      onToggle(barberId, !isActive);
+      const result = await toggleBarberActive(barberId, !isActive);
+      if (result.error) {
+        onToggle(barberId, isActive);
+      } else {
+        onToggle(barberId, !isActive);
+      }
     });
   };
 
