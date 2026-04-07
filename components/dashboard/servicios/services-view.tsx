@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition, useEffect } from "react";
+import { useActionState, useState, useTransition, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Scissors, Trash2, X, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -375,10 +375,10 @@ export function ServicesView({ initialServices }: ServicesViewProps) {
     setDrawerOpen(true);
   };
 
-  const closeDrawer = () => {
+  const closeDrawer = useCallback(() => {
     setDrawerOpen(false);
     setEditingService(undefined);
-  };
+  }, []);
 
   const handleServiceSuccess = (updated?: ServiceRow) => {
     if (updated) {

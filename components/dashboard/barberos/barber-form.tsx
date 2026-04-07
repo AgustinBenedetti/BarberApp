@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createBarber, updateBarber, deleteBarber } from "@/actions/barbers-services";
-import type { BarberRow, BarberAvailability } from "@/actions/barbers-services";
+import type { BarberRow, BarberAvailability, DaySchedule } from "@/actions/barbers-services";
 import { Button } from "@/components/ui/button";
 import { DAYS, DAY_LABELS, type Day } from "@/lib/validations/onboarding";
 
@@ -23,8 +23,6 @@ const TIME_OPTIONS = Array.from({ length: 36 }, (_, i) => {
   const m = total % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 });
-
-type DaySchedule = { closed: boolean; open: string; close: string };
 
 const DEFAULT_AVAILABILITY: BarberAvailability = {
   monday: { closed: false, open: "09:00", close: "19:00" },
@@ -49,9 +47,12 @@ export function BarberForm({ barber }: BarberFormProps) {
   const action = isEditing ? updateBarber : createBarber;
   const [state, formAction, isPending] = useActionState(action, null);
 
-  // Redirect on successful creation
+  // Redirect on successful creation; refresh on successful edit
   useEffect(() => {
-    if (state?.success && !isEditing) {
+    if (!state?.success) return;
+    if (isEditing) {
+      router.refresh();
+    } else {
       router.push("/dashboard/barberos");
     }
   }, [state?.success, isEditing, router]);
